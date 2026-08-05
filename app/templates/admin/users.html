@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Users · Admin · HDPS{% endblock %}
+{% block content %}
+<h1>Users</h1>
+<table class="table">
+  <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Created</th><th>Change role</th></tr></thead>
+  <tbody>
+  {% for u in users %}
+    <tr>
+      <td>{{ u.id }}</td>
+      <td>{{ u.username }}</td>
+      <td>{{ u.email or '—' }}</td>
+      <td><strong>{{ u.role }}</strong></td>
+      <td>{{ u.created_at.strftime('%Y-%m-%d') if u.created_at else '' }}</td>
+      <td>
+        <form method="post" action="{{ url_for('admin.change_role', user_id=u.id) }}" class="inline-form">
+          <select name="role">
+            <option {% if u.role == 'doctor' %}selected{% endif %}>doctor</option>
+            <option {% if u.role == 'patient' %}selected{% endif %}>patient</option>
+            <option {% if u.role == 'admin' %}selected{% endif %}>admin</option>
+          </select>
+          <button type="submit" class="btn btn-link">Save</button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

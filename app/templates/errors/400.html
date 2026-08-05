@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Bad request · HDPS{% endblock %}
+{% block content %}
+<h1>400 — Bad request</h1>
+<p>Something about the request didn't make sense. <a href="{{ url_for('main.home') }}">Back to home</a>.</p>
+{% endblock %}

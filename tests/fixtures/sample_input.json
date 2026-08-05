@@ -1,0 +1,14 @@
+{
+  "name": "Smoke Test Patient",
+  "Age": 54,
+  "RestingBP": 130,
+  "Cholesterol": 250,
+  "FastingBS": 0,
+  "MaxHR": 145,
+  "Oldpeak": 1.5,
+  "Sex": "F",
+  "ChestPainType": "ASY",
+  "RestingECG": "Normal",
+  "ExerciseAngina": "N",
+  "ST_Slope": "Flat"
+}

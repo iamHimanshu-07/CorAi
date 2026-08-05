@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Rate limited · HDPS{% endblock %}
+{% block content %}
+<h1>429 — Too many requests</h1>
+<p>Slow down for a moment, then try again. <a href="{{ url_for('main.home') }}">Back to home</a>.</p>
+{% endblock %}

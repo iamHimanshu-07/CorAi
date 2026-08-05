@@ -1,0 +1,48 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Tests / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+.tox/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local data / secrets
+.env
+.env.local
+*.log
+
+# Generated artifacts
+instance/
+*.db
+*.sqlite
+*.sqlite3
+models/*.pkl
+ml/evaluation/*.png
+ml/evaluation/report.json

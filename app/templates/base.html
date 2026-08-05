@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Heart Disease Prediction System{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="{{ url_for('main.home') }}">
+        <span class="brand-mark">♥</span>
+        <span class="brand-text">HDPS</span>
+      </a>
+      <nav class="primary-nav">
+        {% if current_user.is_authenticated %}
+          <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+          {% if current_user.is_doctor or current_user.is_admin %}
+            <a href="{{ url_for('patients.list_patients') }}">Patients</a>
+            <a href="{{ url_for('predict.form') }}">New prediction</a>
+          {% endif %}
+          {% if current_user.is_admin %}
+            <a href="{{ url_for('admin.users') }}">Users</a>
+            <a href="{{ url_for('admin.audit') }}">Audit</a>
+          {% endif %}
+          <form method="post" action="{{ url_for('auth.logout') }}" class="inline-form">
+            <button class="btn btn-link" type="submit">Logout ({{ current_user.username }})</button>
+          </form>
+        {% else %}
+          <a href="{{ url_for('auth.login') }}">Login</a>
+          <a href="{{ url_for('auth.register') }}">Register</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash">
+          {% for category, message in messages %}
+            <li class="flash-item flash-{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <small>Educational use only. Not a clinical diagnosis. <a href="{{ url_for('static', filename='MODEL_CARD.md') }}">MODEL_CARD</a></small>
+    </div>
+  </footer>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Patients · HDPS{% endblock %}
+{% block content %}
+<h1>Patients</h1>
+<p><a class="btn btn-primary" href="{{ url_for('patients.new_patient') }}">New patient</a></p>
+
+{% if patients %}
+<table class="table">
+  <thead><tr><th>ID</th><th>Name</th><th>Age</th><th>Risk</th><th>Probability</th><th>Created</th><th></th></tr></thead>
+  <tbody>
+  {% for p in patients %}
+    <tr>
+      <td>{{ p.id }}</td>
+      <td><a href="{{ url_for('patients.detail', patient_id=p.id) }}">{{ p.name }}</a></td>
+      <td>{{ '%0.1f' % p.age }}</td>
+      <td>{{ p.risk or '—' }}</td>
+      <td>{{ '%0.2f' % (p.probability or 0) }}%</td>
+      <td>{{ p.created_at.strftime('%Y-%m-%d') if p.created_at else '' }}</td>
+      <td>
+        <form method="post" action="{{ url_for('patients.delete', patient_id=p.id) }}" onsubmit="return confirm('Delete {{ p.name }}?');" class="inline-form">
+          <button type="submit" class="btn btn-link danger">Delete</button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">No patients yet.</p>
+{% endif %}
+{% endblock %}

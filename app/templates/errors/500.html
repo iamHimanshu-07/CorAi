@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Server error · HDPS{% endblock %}
+{% block content %}
+<h1>500 — Something went wrong</h1>
+<p>We've logged the error. Try again in a moment. <a href="{{ url_for('main.home') }}">Back to home</a>.</p>
+{% endblock %}

@@ -1,0 +1,17 @@
+# Local dev compose: spin up hdps with a bind-mounted heart.csv.
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_CONFIG: config.Config
+      SECRET_KEY: change-me-in-production
+    volumes:
+      - ./heart.csv:/app/heart.csv:ro
+      - hdps-models:/app/models
+      - hdps-data:/app/instance
+
+volumes:
+  hdps-models:
+  hdps-data:

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ patient.name }} · HDPS{% endblock %}
+{% block content %}
+<h1>{{ patient.name }}</h1>
+<dl class="kv">
+  <dt>Age</dt><dd>{{ '%0.1f' % patient.age }}</dd>
+  <dt>Resting BP</dt><dd>{{ '%0.0f' % patient.restingbp }}</dd>
+  <dt>Cholesterol</dt><dd>{{ '%0.0f' % patient.cholesterol }}</dd>
+  <dt>Fasting BS</dt><dd>{{ patient.fastingbs }}</dd>
+  <dt>Max HR</dt><dd>{{ '%0.0f' % patient.maxhr }}</dd>
+  <dt>Oldpeak</dt><dd>{{ '%0.2f' % patient.oldpeak }}</dd>
+  <dt>Sex</dt><dd>{{ patient.sex }}</dd>
+  <dt>Chest pain</dt><dd>{{ patient.cp }}</dd>
+  <dt>Resting ECG</dt><dd>{{ patient.restecg }}</dd>
+  <dt>Exercise angina</dt><dd>{{ patient.exang }}</dd>
+  <dt>ST slope</dt><dd>{{ patient.slope }}</dd>
+</dl>
+
+<p><a class="btn btn-primary" href="{{ url_for('predict.form') }}?patient_id={{ patient.id }}">Run prediction for this patient</a></p>
+
+<h2>Prediction history</h2>
+{% if predictions %}
+<table class="table">
+  <thead><tr><th>ID</th><th>Probability</th><th>Risk</th><th>Model</th><th>When</th></tr></thead>
+  <tbody>
+  {% for pred in predictions %}
+    <tr>
+      <td>{{ pred.id }}</td>
+      <td>{{ '%0.2f' % pred.probability }}%</td>
+      <td><span class="badge badge-{{ pred.risk | lower }}">{{ pred.risk }}</span></td>
+      <td>{{ pred.model_version }}</td>
+      <td>{{ pred.created_at.strftime('%Y-%m-%d %H:%M') if pred.created_at else '' }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">No predictions logged for this patient yet.</p>
+{% endif %}
+{% endblock %}

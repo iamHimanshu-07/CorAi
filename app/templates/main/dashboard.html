@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · HDPS{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+<p class="muted">Signed in as <strong>{{ current_user.username }}</strong> ({{ current_user.role }}).</p>
+
+{% if recent_patients %}
+  <section class="panel">
+    <h2>Recent patients</h2>
+    <table class="table">
+      <thead><tr><th>ID</th><th>Name</th><th>Risk</th><th>Probability</th><th>Created</th></tr></thead>
+      <tbody>
+      {% for p in recent_patients %}
+        <tr>
+          <td>{{ p.id }}</td>
+          <td><a href="{{ url_for('patients.detail', patient_id=p.id) }}">{{ p.name }}</a></td>
+          <td>{{ p.risk or '—' }}</td>
+          <td>{{ '%0.2f' % (p.probability or 0) }}%</td>
+          <td>{{ p.created_at.strftime('%Y-%m-%d %H:%M') if p.created_at else '' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% endif %}
+
+{% if recent_predictions %}
+  <section class="panel">
+    <h2>Recent predictions</h2>
+    <table class="table">
+      <thead><tr><th>ID</th><th>Patient</th><th>Risk</th><th>Probability</th><th>Model</th><th>When</th><th>PDF</th></tr></thead>
+      <tbody>
+      {% for pred in recent_predictions %}
+        <tr>
+          <td>{{ pred.id }}</td>
+          <td>{{ pred.patient_id }}</td>
+          <td><span class="badge badge-{{ pred.risk | lower }}">{{ pred.risk }}</span></td>
+          <td>{{ '%0.2f' % pred.probability }}%</td>
+          <td>{{ pred.model_version }}</td>
+          <td>{{ pred.created_at.strftime('%Y-%m-%d %H:%M') if pred.created_at else '' }}</td>
+          <td><a href="{{ url_for('predict.pdf_report', prediction_id=pred.id) }}">PDF</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+{% endif %}
+
+{% if not recent_patients and not recent_predictions %}
+  <p class="empty">No activity yet. <a href="{{ url_for('predict.form') }}">Run a prediction</a> to get started.</p>
+{% endif %}
+{% endblock %}

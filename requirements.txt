@@ -1,0 +1,35 @@
+# Web Framework & Core Utilities
+Flask==3.0.3
+Werkzeug==3.0.4
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.0.7
+Flask-Login==0.6.3
+Flask-WTF==1.2.1
+email-validator==2.2.0
+Flask-Limiter==3.8.0
+SQLAlchemy==2.0.34
+alembic==1.13.2
+python-dotenv==1.0.1
+gunicorn==23.0.0
+reportlab==4.2.2
+
+# Data Science & Machine Learning Core
+numpy>=2.0.0
+pandas>=2.2.3
+scikit-learn>=1.5.0
+joblib>=1.4.2
+
+# ML Experimentation (Phase 1)
+xgboost>=2.1.0
+lightgbm>=4.5.0
+shap>=0.46.0
+imbalanced-learn>=0.12.0
+matplotlib>=3.9.2
+seaborn>=0.13.2
+
+# Production Extras (Phase 2)
+pydantic>=2.10.0
+structlog==24.4.0
+pytest==8.3.3
+pytest-cov==5.0.0
+ruff==0.7.2

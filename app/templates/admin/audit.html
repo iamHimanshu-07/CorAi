@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Audit log · Admin · HDPS{% endblock %}
+{% block content %}
+<h1>Audit log</h1>
+<p class="muted">{{ pagination.total }} predictions logged. Showing page {{ pagination.page }} of {{ pagination.pages }}.</p>
+
+<table class="table">
+  <thead><tr><th>ID</th><th>Patient</th><th>User</th><th>Probability</th><th>Risk</th><th>Model</th><th>When</th></tr></thead>
+  <tbody>
+  {% for pred in pagination.items %}
+    <tr>
+      <td>{{ pred.id }}</td>
+      <td>{{ pred.patient_id }}</td>
+      <td>{{ pred.user_id or '—' }}</td>
+      <td>{{ '%0.2f' % pred.probability }}%</td>
+      <td><span class="badge badge-{{ pred.risk | lower }}">{{ pred.risk }}</span></td>
+      <td>{{ pred.model_version }}</td>
+      <td>{{ pred.created_at.strftime('%Y-%m-%d %H:%M:%S') if pred.created_at else '' }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<nav class="pagination">
+  {% if pagination.has_prev %}
+    <a href="{{ url_for('admin.audit', page=pagination.prev_num) }}">Previous</a>
+  {% endif %}
+  {% if pagination.has_next %}
+    <a href="{{ url_for('admin.audit', page=pagination.next_num) }}">Next</a>
+  {% endif %}
+</nav>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Register · HDPS{% endblock %}
+{% block content %}
+<h1>Register as patient</h1>
+<form method="post" action="{{ url_for('auth.register') }}" class="form-card">
+  <label>Username <input name="username" required autofocus></label>
+  <label>Email (optional) <input name="email" type="email"></label>
+  <label>Password <input name="password" type="password" required minlength="8"></label>
+  <button type="submit" class="btn btn-primary">Create account</button>
+  <p class="muted">Doctors and admins must be created via the CLI: <code>flask --app wsgi:app create-user --username &lt;name&gt; --role doctor</code>.</p>
+</form>
+{% endblock %}

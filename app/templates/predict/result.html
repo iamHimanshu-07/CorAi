@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Prediction result · HDPS{% endblock %}
+{% block content %}
+<h1>Prediction result</h1>
+
+<section class="result-card">
+  <div class="probability">
+    <span class="big">{{ '%0.2f' % result.probability }}%</span>
+    <span class="badge badge-{{ result.risk | lower }}">{{ result.risk }}</span>
+  </div>
+  <p class="muted">Model version: {{ result.model_version }}</p>
+  <p><a class="btn btn-primary" href="{{ url_for('predict.pdf_report', prediction_id=prediction_id) }}">Download PDF report</a></p>
+</section>
+
+<section class="panel">
+  <h2>Input features</h2>
+  <dl class="kv">
+    {% for k, v in features.to_dataframe_row().items() %}
+      <dt>{{ k }}</dt><dd>{{ v }}</dd>
+    {% endfor %}
+  </dl>
+</section>
+
+{% if explanations %}
+<section class="panel">
+  <h2>Why this score? (SHAP feature contributions)</h2>
+  <table class="table">
+    <thead><tr><th>Feature</th><th>Contribution</th></tr></thead>
+    <tbody>
+      {% for name, value in explanations.items() %}
+        <tr>
+          <td>{{ name }}</td>
+          <td>{{ '%+.4f' % value }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+<p><a class="btn btn-secondary" href="{{ url_for('predict.form') }}">Run another</a></p>
+{% endblock %}

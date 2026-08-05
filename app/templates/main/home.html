@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Heart Disease Prediction System{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Heart Disease Prediction System</h1>
+  <p class="lede">Calibrated ensemble classifier on routine clinical measurements. Per-prediction audit log. SHAP explanations.</p>
+  <p class="warning">⚠️ Educational use only. Not a clinical diagnosis.</p>
+  {% if not current_user.is_authenticated %}
+    <p>
+      <a class="btn btn-primary" href="{{ url_for('auth.login') }}">Sign in</a>
+      <a class="btn btn-secondary" href="{{ url_for('auth.register') }}">Register as patient</a>
+    </p>
+  {% else %}
+    <p><a class="btn btn-primary" href="{{ url_for('main.dashboard') }}">Go to dashboard</a></p>
+  {% endif %}
+</section>
+
+<section class="card-grid">
+  <article class="card">
+    <h2>11 features</h2>
+    <p>Age, resting BP, cholesterol, fasting blood sugar, max heart rate, ST depression, sex, chest pain type, resting ECG, exercise angina, ST slope.</p>
+  </article>
+  <article class="card">
+    <h2>Calibrated probabilities</h2>
+    <p>Logistic Regression, Random Forest, XGBoost, LightGBM, isotonic-calibrated. Best by 5-fold CV ROC-AUC.</p>
+  </article>
+  <article class="card">
+    <h2>Auditable</h2>
+    <p>Every prediction persists with input features, model version, and the user who triggered it.</p>
+  </article>
+</section>
+{% endblock %}

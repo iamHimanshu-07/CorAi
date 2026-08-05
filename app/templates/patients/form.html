@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}New patient · HDPS{% endblock %}
+{% block content %}
+<h1>New patient</h1>
+<form method="post" action="{{ url_for('patients.create_patient') }}" class="form-card grid-2">
+  <label>Name <input name="name" required></label>
+  <label>Age <input name="age" type="number" step="0.1" min="0" max="120" required></label>
+  <label>Resting BP <input name="restingbp" type="number" step="0.1" min="0" max="300" required></label>
+  <label>Cholesterol <input name="cholesterol" type="number" step="0.1" min="0" max="1000" required></label>
+  <label>Fasting BS <select name="fastingbs"><option value="0">0</option><option value="1">1</option></select></label>
+  <label>Max HR <input name="maxhr" type="number" step="0.1" min="0" max="300" required></label>
+  <label>Oldpeak <input name="oldpeak" type="number" step="0.1" min="-5" max="10" required></label>
+  <label>Sex
+    <select name="sex">
+      <option value="M">M</option><option value="F">F</option>
+    </select>
+  </label>
+  <label>Chest pain type
+    <select name="cp">
+      <option>ATA</option><option>NAP</option><option>ASY</option><option>TA</option>
+    </select>
+  </label>
+  <label>Resting ECG
+    <select name="restecg">
+      <option>Normal</option><option>ST</option><option>LVH</option>
+    </select>
+  </label>
+  <label>Exercise angina
+    <select name="exang">
+      <option value="N">N</option><option value="Y">Y</option>
+    </select>
+  </label>
+  <label>ST slope
+    <select name="slope">
+      <option>Up</option><option>Flat</option><option>Down</option>
+    </select>
+  </label>
+  <div class="form-actions span-2">
+    <button type="submit" class="btn btn-primary">Create</button>
+    <a class="btn btn-secondary" href="{{ url_for('patients.list_patients') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

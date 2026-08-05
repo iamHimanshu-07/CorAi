@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from urllib.parse import urlparse
+
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
-from werkzeug.urls import url_parse
 
 from ...extensions import db
 from ...models import User
@@ -35,7 +36,7 @@ def login_post():
     db.session.commit()
 
     next_url = request.args.get("next")
-    if not next_url or url_parse(next_url).netloc != "":
+    if not next_url or urlparse(next_url).netloc != "":
         next_url = url_for("main.dashboard")
     return redirect(next_url)
 

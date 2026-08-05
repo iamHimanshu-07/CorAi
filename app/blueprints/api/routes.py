@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from flask import Blueprint, current_app, jsonify, request
 from pydantic import BaseModel, Field, ValidationError
@@ -114,6 +114,6 @@ def predict():
             "probability": result.probability,
             "risk": result.risk,
             "model_version": result.model_version,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
     ), 200

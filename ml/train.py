@@ -26,9 +26,10 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import os
 import sys
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -58,6 +59,12 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import StratifiedKFold, cross_val_score, train_test_split
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
+
+# `n_jobs=-1` triggers joblib/loky multiprocessing, which crashes on Windows
+# with Python 3.14+ (WinError 6: invalid handle in DuplicateHandle). Allow
+# users to opt into parallelism explicitly via env var; default to 1 for
+# cross-platform safety.
+N_JOBS = int(os.getenv("HDPS_N_JOBS", "1"))
 
 # Optional heavy deps — degrade gracefully if absent
 try:
@@ -124,7 +131,7 @@ def candidate_models() -> dict[str, Any]:
         "logreg": LogisticRegression(max_iter=2000, class_weight="balanced", C=1.0),
         "rf": RandomForestClassifier(
             n_estimators=400, max_depth=12, min_samples_leaf=2,
-            class_weight="balanced", random_state=42, n_jobs=-1,
+            class_weight="balanced", random_state=42, n_jobs=N_JOBS,
         ),
     }
     if HAS_XGBOOST:
@@ -132,13 +139,13 @@ def candidate_models() -> dict[str, Any]:
             n_estimators=400, max_depth=4, learning_rate=0.05,
             subsample=0.9, colsample_bytree=0.9,
             scale_pos_weight=1, eval_metric="logloss",
-            random_state=42, n_jobs=-1,
+            random_state=42, n_jobs=N_JOBS,
         )
     if HAS_LIGHTGBM:
         models["lgbm"] = lgb.LGBMClassifier(
             n_estimators=400, max_depth=-1, num_leaves=31,
             learning_rate=0.05, class_weight="balanced",
-            random_state=42, n_jobs=-1, verbose=-1,
+            random_state=42, n_jobs=N_JOBS, verbose=-1,
         )
     return models
 
@@ -174,7 +181,7 @@ def evaluate(
         "brier": float(brier_score_loss(y_test, y_proba)),
     }
 
-    cv_scores = cross_val_score(pipeline, X_test, y_test, cv=cv, scoring="roc_auc", n_jobs=-1)
+    cv_scores = cross_val_score(pipeline, X_test, y_test, cv=cv, scoring="roc_auc", n_jobs=N_JOBS)
     log.info(
         f"[{name}] test ROC-AUC={metrics['roc_auc']:.4f}  "
         f"cv ROC-AUC={cv_scores.mean():.4f}±{cv_scores.std():.4f}"
@@ -342,7 +349,7 @@ def train_pipeline(version: str, data_path: Path) -> dict[str, Any]:
             "cv_roc_auc_std": best.cv_roc_auc_std,
         },
         "feature_names_after_preprocessing": feature_names,
-        "trained_at": datetime.now(timezone.utc).isoformat(),
+        "trained_at": datetime.now(UTC).isoformat(),
         "tools": {
             "sklearn": __import__("sklearn").__version__,
             "numpy": np.__version__,

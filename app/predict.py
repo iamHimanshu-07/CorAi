@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import Any
 
 import joblib
-import numpy as np
 
 log = logging.getLogger(__name__)
 
@@ -54,7 +53,7 @@ class PredictionResult:
 class Predictor:
     """Lazy-loaded, thread-safe model wrapper."""
 
-    _instance: "Predictor | None" = None
+    _instance: Predictor | None = None
     _lock = threading.Lock()
 
     def __init__(self, model_path: str | Path) -> None:
@@ -63,7 +62,7 @@ class Predictor:
         self._version = self.model_path.stem.replace("hdps-", "")
 
     @classmethod
-    def instance(cls, model_path: str | Path | None = None) -> "Predictor":
+    def instance(cls, model_path: str | Path | None = None) -> Predictor:
         with cls._lock:
             if cls._instance is None:
                 if model_path is None:
@@ -130,7 +129,7 @@ class Predictor:
             explainer = shap.TreeExplainer(inner) if hasattr(inner, "estimators_") else shap.Explainer(inner)
             sv = explainer(Xt)
             values = sv.values[0] if hasattr(sv, "values") else sv[0].values
-            return {n: float(v) for n, v in zip(names, values)}
+            return {n: float(v) for n, v in zip(names, values, strict=False)}
         except Exception as exc:  # noqa: BLE001
             log.warning(f"SHAP explain failed: {exc}")
             return None

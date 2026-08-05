@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from flask_login import UserMixin
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -23,7 +23,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True, nullable=True)
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False, default="doctor")  # doctor | patient | admin
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
     last_login_at = db.Column(db.DateTime)
 
     predictions = db.relationship("Prediction", backref="user", lazy="dynamic")
@@ -69,7 +69,7 @@ class Patient(db.Model):
 
     risk = db.Column(db.String(16))
     probability = db.Column(db.Float)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC), index=True)
 
     # Optional link to a user account
     owner_id = db.Column(db.Integer, db.ForeignKey("users.id"))
@@ -94,4 +94,4 @@ class Prediction(db.Model):
     risk = db.Column(db.String(16), nullable=False)
     model_version = db.Column(db.String(32), nullable=False)
     input_features = db.Column(db.JSON, nullable=False)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC), index=True)

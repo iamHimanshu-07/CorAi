@@ -33,13 +33,13 @@ def create_app(config_object: str | object = "config.Config") -> Flask:
     login_manager.login_message_category = "warning"
 
     # Blueprints
+    from .blueprints.admin.routes import bp as admin_bp
+    from .blueprints.api.routes import bp as api_bp
     from .blueprints.auth.routes import bp as auth_bp
+    from .blueprints.fhir.routes import bp as fhir_bp
+    from .blueprints.main.routes import bp as main_bp
     from .blueprints.patients.routes import bp as patients_bp
     from .blueprints.predict.routes import bp as predict_bp
-    from .blueprints.api.routes import bp as api_bp
-    from .blueprints.main.routes import bp as main_bp
-    from .blueprints.admin.routes import bp as admin_bp
-    from .blueprints.fhir.routes import bp as fhir_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix="/auth")

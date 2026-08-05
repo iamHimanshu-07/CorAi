@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import io
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
@@ -119,7 +119,7 @@ def pdf_report(prediction_id: int):
         Paragraph("Heart Disease Prediction System", styles["Title"]),
         Paragraph("Prediction Report", styles["Heading2"]),
         Spacer(1, 0.2 * inch),
-        Paragraph(f"Generated: {datetime.now(timezone.utc).isoformat()}", styles["Normal"]),
+        Paragraph(f"Generated: {datetime.now(UTC).isoformat()}", styles["Normal"]),
         Paragraph(f"Prediction ID: {pred.id}", styles["Normal"]),
         Paragraph(f"Patient ID: {pred.patient_id}", styles["Normal"]),
         Paragraph(f"Model version: {pred.model_version}", styles["Normal"]),

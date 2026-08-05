@@ -75,5 +75,18 @@ def create_app(config_object: str | object = "config.Config") -> Flask:
             db.session.execute(db.text("SELECT 1 FROM users LIMIT 1"))
         except Exception:
             db.create_all()
+            # Best-effort additive migrations so dev DBs pick up new columns
+            # without needing a full `flask init-db` round-trip.
+            try:
+                from sqlalchemy import inspect
+
+                from .cli import _apply_light_migrations
+                inspector = inspect(db.engine)
+                if "users" in inspector.get_table_names():
+                    cols = {c["name"] for c in inspector.get_columns("users")}
+                    if "area" not in cols:
+                        _apply_light_migrations()
+            except Exception:
+                pass
 
     return app

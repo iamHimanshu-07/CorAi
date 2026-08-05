@@ -16,7 +16,12 @@ def seed_default_doctor() -> None:
     username = current_app.config["BOOTSTRAP_DOCTOR_USERNAME"]
     if User.query.filter_by(username=username).first():
         return
-    doctor = User(username=username, role="doctor", email=current_app.config["BOOTSTRAP_DOCTOR_EMAIL"])
+    doctor = User(
+        username=username,
+        role="doctor",
+        email=current_app.config["BOOTSTRAP_DOCTOR_EMAIL"],
+        area=current_app.config.get("BOOTSTRAP_DOCTOR_AREA", "India"),
+    )
     doctor.set_password(current_app.config["BOOTSTRAP_DOCTOR_PASSWORD"])
     db.session.add(doctor)
     db.session.commit()

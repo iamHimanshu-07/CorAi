@@ -11,6 +11,7 @@
 <form method="post" action="{{ url_for('auth.register') }}" class="form-card center">
   <label>Username <input name="username" required autofocus></label>
   <label>Email <input name="email" type="email" placeholder="optional"></label>
+  <label>Area / City <input name="area" placeholder="e.g. Mumbai, IN" maxlength="120"></label>
   <label>Password <input name="password" type="password" required minlength="8"></label>
   <div class="form-actions">
     <button type="submit" class="btn btn-primary" style="flex:1;">Create account</button>

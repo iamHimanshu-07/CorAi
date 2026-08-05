@@ -53,6 +53,7 @@ def register_post():
     username = request.form.get("username", "").strip()
     email = request.form.get("email", "").strip() or None
     password = request.form.get("password", "")
+    area = request.form.get("area", "").strip() or None
 
     if not username or not password:
         flash("Username and password are required.", "danger")
@@ -62,7 +63,7 @@ def register_post():
         flash("Username already taken.", "danger")
         return redirect(url_for("auth.register"))
 
-    user = User(username=username, role="patient", email=email)
+    user = User(username=username, role="patient", email=email, area=area)
     user.set_password(password)
     db.session.add(user)
     db.session.commit()

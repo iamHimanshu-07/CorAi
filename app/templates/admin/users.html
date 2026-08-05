@@ -17,6 +17,7 @@
       <th>Username</th>
       <th>Email</th>
       <th>Role</th>
+      <th>Area</th>
       <th>Created</th>
       <th>Change role</th>
     </tr>
@@ -28,6 +29,7 @@
       <td><strong>{{ u.username }}</strong></td>
       <td>{{ u.email or '—' }}</td>
       <td>{{ m.pill(u.role, kind='neutral') }}</td>
+      <td>{{ u.area or '—' }}</td>
       <td>{{ u.created_at.strftime('%Y-%m-%d') if u.created_at else '' }}</td>
       <td>
         <form method="post" action="{{ url_for('admin.change_role', user_id=u.id) }}" class="inline-form">

@@ -20,37 +20,18 @@
       </p>
     </div>
     <div class="hero-art">
-      <div class="kpi-block" style="--accent: var(--primary);">
-        <div class="kpi-label">Best CV ROC-AUC</div>
-        <div class="kpi-value">
-          {% if metrics %}{{ '%0.4f' % metrics.best_model.cv_roc_auc_mean }}{% else %}—{% endif %}
-        </div>
-        <div class="kpi-sub">
-          {% if metrics %}5-fold · {{ metrics.best_model.name }}{% else %}run ml/train first{% endif %}
-        </div>
-      </div>
-      <div class="kpi-block" style="--accent: var(--success);">
-        <div class="kpi-label">Training rows</div>
-        <div class="kpi-value">
-          {% if metrics %}{{ metrics.dataset.rows }}{% else %}—{% endif %}
-        </div>
-        <div class="kpi-sub">
-          {% if metrics %}features: {{ metrics.dataset.features | length }}{% else %}run ml/train first{% endif %}
-        </div>
-      </div>
-      <div class="kpi-block" style="--accent: var(--text);">
-        <div class="kpi-label">Calibration</div>
-        <div class="kpi-value">5-fold</div>
-        <div class="kpi-sub">isotonic CV</div>
-      </div>
+      {{ m.kpi_block("Doctors", total_doctors, "registered", accent="var(--text)") }}
+      {{ m.kpi_block("Admins", total_admins, "registered", accent="var(--primary)") }}
+      {{ m.kpi_block("Predictions", total_predictions, "logged", accent="var(--success)") }}
     </div>
   </div>
 </section>
 
 <section class="kpi-row">
-  {{ m.kpi_block("Predictions logged", total_predictions, "across all users", accent="var(--primary)") }}
-  {{ m.kpi_block("Patients", total_patients, "in the active registry", accent="var(--text)") }}
+  {{ m.kpi_block("Total patients", total_patients, "in the registry", accent="var(--text)") }}
+  {{ m.kpi_block("Total predictions", total_predictions, "logged", accent="var(--primary)") }}
   {{ m.kpi_block("Low risk", risk_counts.Low, "patients", accent="var(--success)") }}
+  {{ m.kpi_block("Moderate risk", risk_counts.Moderate, "patients", accent="var(--warning)") }}
   {{ m.kpi_block("High risk", risk_counts.High, "patients", accent="var(--danger)") }}
 </section>
 
@@ -74,18 +55,57 @@
 </section>
 
 <section class="panel">
-  <h2>How to use the API</h2>
-  <p class="muted">Same input schema as the form. JSON in / JSON out, strict Pydantic v2 validation, 4&nbsp;MB body limit.</p>
-  <pre><code>POST /v1/predict
-Content-Type: application/json
-
-{
-  "name": "Jane Doe",
-  "Age": 54, "RestingBP": 130, "Cholesterol": 250,
-  "FastingBS": 0, "MaxHR": 145, "Oldpeak": 1.5,
-  "Sex": "F", "ChestPainType": "ASY",
-  "RestingECG": "Normal", "ExerciseAngina": "N", "ST_Slope": "Flat"
-}</code></pre>
-  <p style="margin-top:14px;">See <a href="{{ url_for('metrics.show') }}">Model metrics</a> for live ROC-AUC, calibration plots, and the SHAP summary.</p>
+  <h2>Doctors &amp; admins</h2>
+  <p class="muted" style="margin-top:-8px;">{{ total_doctors }} doctor{{ '' if total_doctors == 1 else 's' }} and {{ total_admins }} admin{{ '' if total_admins == 1 else 's' }} registered. Area / city is set during sign-up.</p>
+  <div class="grid-2-col" style="margin-top:16px;">
+    {% if doctor_staff %}
+    <div>
+      <h3 style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin:0 0 12px;">Doctors</h3>
+      <dl class="kv">
+        {% for u in doctor_staff[:6] %}
+          <dt>{{ u.username }}</dt>
+          <dd>{{ u.area or '—' }}</dd>
+        {% endfor %}
+      </dl>
+    </div>
+    {% endif %}
+    {% if admin_staff %}
+    <div>
+      <h3 style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin:0 0 12px;">Admins</h3>
+      <dl class="kv">
+        {% for u in admin_staff[:6] %}
+          <dt>{{ u.username }}</dt>
+          <dd>{{ u.area or '—' }}</dd>
+        {% endfor %}
+      </dl>
+    </div>
+    {% endif %}
+    {% if not doctor_staff and not admin_staff %}
+    <p class="muted" style="grid-column: 1 / -1;">No doctors or admins yet.</p>
+    {% endif %}
+  </div>
 </section>
+
+{% if metrics %}
+<section class="panel">
+  <h2>Model report</h2>
+  <div class="grid-2-col" style="margin-top:8px;">
+    <div>
+      <dl class="kv">
+        <dt>Best model</dt><dd><strong>{{ metrics.best_model.name }}</strong></dd>
+        <dt>CV ROC-AUC</dt><dd>{{ '%0.4f' % metrics.best_model.cv_roc_auc_mean }} ± {{ '%0.4f' % metrics.best_model.cv_roc_auc_std }}</dd>
+        <dt>Positive rate</dt><dd>{{ '%0.1f' % (metrics.dataset.positive_rate * 100) }}%</dd>
+      </dl>
+    </div>
+    <div>
+      {% set rows = [] %}
+      {% for mdl in metrics.models %}
+        {% set rows = rows + [{'label': mdl.name, 'value': mdl.cv_roc_auc_mean, 'color': 'var(--primary)' if mdl.name == metrics.best_model.name else 'var(--muted)'}] %}
+      {% endfor %}
+      {{ charts.bar_chart(rows) }}
+    </div>
+  </div>
+  <p style="margin-top:24px;"><a class="btn btn-secondary" href="{{ url_for('metrics.show') }}">View full report →</a></p>
+</section>
+{% endif %}
 {% endblock %}

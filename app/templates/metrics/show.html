@@ -15,7 +15,6 @@
 
 <section class="kpi-row">
   {{ charts.kpi_tile("Best CV ROC-AUC", '%0.4f' % best.cv_roc_auc_mean, '± ' ~ '%0.4f' % best.cv_roc_auc_std, color="var(--primary)") }}
-  {{ charts.kpi_tile("Training rows", report.dataset.rows, 'features: ' ~ (report.dataset.features | length), color="var(--success)") }}
   {{ charts.kpi_tile("Positive rate", '%0.1f' % (report.dataset.positive_rate * 100) ~ '%', 'class balance', color="var(--warning)") }}
   {{ charts.kpi_tile("Selected by", '5-fold CV', best.name, color="var(--text)") }}
 </section>
@@ -102,14 +101,6 @@
       </article>
     {% endfor %}
   </div>
-</section>
-
-<section class="panel">
-  <h2>SHAP summary (best model)</h2>
-  <p class="muted">Global feature importance. Each row is a feature; each dot is a single test-set prediction.</p>
-  <a href="{{ url_for('metrics.artifact', artifact='shap_summary.png') }}" target="_blank" rel="noopener">
-    <img src="{{ url_for('metrics.artifact', artifact='shap_summary.png') }}" alt="SHAP summary" class="full-img">
-  </a>
 </section>
 
 <section class="panel">

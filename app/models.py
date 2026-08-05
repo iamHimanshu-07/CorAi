@@ -23,6 +23,7 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True, nullable=True)
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False, default="doctor")  # doctor | patient | admin
+    area = db.Column(db.String(120))  # e.g. "Mumbai, IN" — area / city for doctors
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
     last_login_at = db.Column(db.DateTime)
 

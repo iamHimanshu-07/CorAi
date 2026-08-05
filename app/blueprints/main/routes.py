@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import json
-from collections import Counter
 from pathlib import Path
 
 from flask import Blueprint, current_app, render_template
 from flask_login import current_user, login_required
 
-from ...models import Patient, Prediction
+from ...models import Patient, Prediction, User
 
 bp = Blueprint("main", __name__)
 
@@ -26,21 +25,36 @@ def _load_model_metrics() -> dict | None:
 
 
 def _risk_counts() -> dict[str, int]:
-    counts: Counter[str] = Counter(Prediction.query.with_entities(Prediction.risk).all())
     out = {"Low": 0, "Moderate": 0, "High": 0}
-    for r in counts:
-        if r in out:
-            out[r] = counts[r]
+    for risk, in Prediction.query.with_entities(Prediction.risk).all():
+        if risk in out:
+            out[risk] += 1
     return out
 
 
 @bp.get("/")
 def home():
     metrics = _load_model_metrics()
+    doctor_staff = (
+        User.query.filter_by(role="doctor")
+        .order_by(User.created_at.desc())
+        .limit(6)
+        .all()
+    )
+    admin_staff = (
+        User.query.filter_by(role="admin")
+        .order_by(User.created_at.desc())
+        .limit(6)
+        .all()
+    )
     return render_template(
         "main/home.html",
         total_predictions=Prediction.query.count(),
         total_patients=Patient.query.count(),
+        total_doctors=User.query.filter_by(role="doctor").count(),
+        total_admins=User.query.filter_by(role="admin").count(),
+        doctor_staff=doctor_staff,
+        admin_staff=admin_staff,
         risk_counts=_risk_counts(),
         metrics=metrics,
     )

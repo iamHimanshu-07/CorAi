@@ -10,7 +10,12 @@
   </div>
   <p>
     <a class="btn btn-secondary" href="{{ url_for('patients.list_patients') }}">← Back to registry</a>
-    <a class="btn btn-primary" href="{{ url_for('predict.form') }}?patient_id={{ patient.id }}">Run prediction →</a>
+    <a class="btn btn-secondary" href="{{ url_for('predict.form') }}?patient_id={{ patient.id }}">Run prediction</a>
+    <a class="btn btn-primary" href="{{ url_for('patients.edit', patient_id=patient.id) }}">Edit patient</a>
+    <form method="post" action="{{ url_for('patients.delete', patient_id=patient.id) }}"
+          onsubmit="return confirm('Delete {{ patient.name }}? This cannot be undone.');" class="inline-form">
+      <button type="submit" class="btn btn-link danger">Delete</button>
+    </form>
   </p>
 </header>
 

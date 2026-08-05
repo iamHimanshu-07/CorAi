@@ -3,125 +3,267 @@
 {% import "_macros.html" as m %}
 {% block title %}Dashboard · HDPS{% endblock %}
 {% block content %}
+
+{# ========== Role banner ========== #}
+<div class="role-banner" data-role="{{ current_user.role }}">
+  <div>
+    <p class="role-banner-title">
+      {% if current_user.is_doctor %}Doctor view{% endif %}
+      {% if current_user.is_patient %}Patient view{% endif %}
+      {% if current_user.is_admin %}Admin view{% endif %}
+    </p>
+    <p class="role-banner-meta">
+      Signed in as <strong>{{ current_user.username }}</strong>
+      {% if current_user.area %}· {{ current_user.area }}{% endif %}
+      {% if current_user.is_doctor %}— you can manage patients and run predictions on their behalf.{% endif %}
+      {% if current_user.is_patient %}— you can run predictions on your own data and download PDF reports.{% endif %}
+      {% if current_user.is_admin %}— full access: doctor tools + user / audit administration.{% endif %}
+    </p>
+  </div>
+  <span class="role-badge role-badge-{{ current_user.role }}">{{ current_user.role }}</span>
+</div>
+
+{# ========== Role-scope summary ========== #}
+<section class="role-scope">
+  <div class="scope-tile" data-state="{% if current_user.is_doctor or current_user.is_admin %}yes{% else %}no{% endif %}">
+    <h4>Patients</h4>
+    <p>List, view, edit, and delete patient records.</p>
+    <span class="scope-state">{% if current_user.is_doctor or current_user.is_admin %}Available{% else %}Restricted{% endif %}</span>
+  </div>
+  <div class="scope-tile" data-state="yes">
+    <h4>Predictions</h4>
+    <p>{% if current_user.is_patient %}Run predictions on your own inputs and download PDF reports.{% else %}Run predictions on any patient and download PDF reports.{% endif %}</p>
+    <span class="scope-state">Available</span>
+  </div>
+  <div class="scope-tile" data-state="{% if current_user.is_admin %}yes{% else %}no{% endif %}">
+    <h4>Admin tools</h4>
+    <p>User management and full audit log.</p>
+    <span class="scope-state">{% if current_user.is_admin %}Available{% else %}Restricted{% endif %}</span>
+  </div>
+</section>
+
+{# ========== Page header ========== #}
 <header class="page-header">
   <div>
     <h1>Dashboard</h1>
-    <p class="muted">Signed in as <strong>{{ current_user.username }}</strong> · role {{ current_user.role }}.</p>
+    <p class="muted">
+      {% if current_user.is_patient %}Your prediction history. Run a new one anytime.{% endif %}
+      {% if current_user.is_doctor %}Patient registry, predictions, and risk distribution.{% endif %}
+      {% if current_user.is_admin %}Full system overview with admin tools.{% endif %}
+    </p>
   </div>
   <p>
     {% if current_user.is_doctor or current_user.is_admin %}
       <a class="btn btn-secondary" href="{{ url_for('predict.form') }}">Run prediction →</a>
       <a class="btn btn-primary" href="{{ url_for('patients.new_patient') }}">+ New patient</a>
     {% else %}
-      <a class="btn btn-primary" href="{{ url_for('predict.form') }}">Run prediction →</a>
+      <a class="btn btn-primary" href="{{ url_for('predict.form') }}">Run a prediction →</a>
     {% endif %}
   </p>
 </header>
 
-<section class="kpi-row">
-  {{ m.kpi_block("Total patients", total_patients, "in the registry", accent="var(--text)") }}
-  {{ m.kpi_block("Total predictions", total_predictions, "logged", accent="var(--primary)") }}
-  {{ m.kpi_block("Low risk", risk_counts.Low, "patients", accent="var(--success)") }}
-  {{ m.kpi_block("Moderate risk", risk_counts.Moderate, "patients", accent="var(--warning)") }}
-  {{ m.kpi_block("High risk", risk_counts.High, "patients", accent="var(--danger)") }}
-</section>
+{# ================================================================== #}
+{# PATIENT VIEW                                                        #}
+{# ================================================================== #}
+{% if current_user.is_patient %}
+  <section class="panel">
+    <h2>Your predictions</h2>
+    <p class="muted" style="margin-top:-8px;">
+      {{ all_my_predictions|length }} prediction{{ '' if all_my_predictions|length == 1 else 's' }} on file.
+      Each one is auditable, with the model version and your inputs.
+    </p>
 
-<section class="grid-2-col">
-  <div class="panel">
-    <h2>Risk distribution</h2>
-    <div class="donut-wrap">
-      {{ charts.risk_donut(risk_counts) }}
-    </div>
-  </div>
-
-  <div class="panel">
-    <h2>Model info</h2>
-    {% if metrics %}
-      <dl class="kv">
-        <dt>Best model</dt>
-        <dd><strong>{{ metrics.best_model.name }}</strong></dd>
-        <dt>CV ROC-AUC</dt>
-        <dd>{{ '%0.4f' % metrics.best_model.cv_roc_auc_mean }} ± {{ '%0.4f' % metrics.best_model.cv_roc_auc_std }}</dd>
-        <dt>Training rows</dt>
-        <dd>{{ metrics.dataset.rows }}</dd>
-        <dt>Trained</dt>
-        <dd>{{ metrics.trained_at[:10] }}</dd>
-      </dl>
-      <p style="margin-top:24px;"><a class="btn btn-secondary" href="{{ url_for('metrics.show') }}">View full report →</a></p>
+    {% if all_my_predictions %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th class="num">Probability</th>
+              <th>Risk</th>
+              <th>Model</th>
+              <th>When</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pred in all_my_predictions %}
+              <tr>
+                <td>{{ pred.id }}</td>
+                <td class="num">{{ '%0.2f' % pred.probability }}%</td>
+                <td>{{ m.pill(pred.risk, kind=pred.risk | lower) }}</td>
+                <td>{{ pred.model_version }}</td>
+                <td>{{ pred.created_at.strftime('%Y-%m-%d %H:%M') if pred.created_at else '' }}</td>
+                <td>
+                  <div class="action-menu">
+                    <a class="action-btn" href="{{ url_for('predict.pdf_report', prediction_id=pred.id) }}">PDF</a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     {% else %}
-      <p class="muted">No evaluation report yet. Run <code>python -m ml.train --data heart.csv --version 1.0.0</code> to generate one.</p>
-      <p style="margin-top:16px;"><a class="btn btn-secondary" href="{{ url_for('metrics.show') }}">Open metrics →</a></p>
+      <div class="patient-predictions-empty">
+        <h3 style="margin:0 0 8px; font-size:18px;">No predictions yet</h3>
+        <p>Run a prediction to see your probability, risk band, and a downloadable PDF report here.</p>
+        <a class="btn btn-primary" href="{{ url_for('predict.form') }}">Run a prediction →</a>
+      </div>
     {% endif %}
-  </div>
-</section>
+  </section>
 
-<section class="panel">
-  <h2>Recent predictions</h2>
-  {% if recent_predictions %}
-  <div class="table-wrap">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Patient</th>
-        <th>Risk</th>
-        <th class="num">Probability</th>
-        <th>Model</th>
-        <th>When</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for pred in recent_predictions %}
-        <tr>
-          <td>{{ pred.id }}</td>
-          <td><a href="{{ url_for('patients.detail', patient_id=pred.patient_id) }}">#{{ pred.patient_id }}</a></td>
-          <td>{{ m.pill(pred.risk, kind=pred.risk | lower) }}</td>
-          <td class="num">{{ '%0.2f' % pred.probability }}%</td>
-          <td>{{ pred.model_version }}</td>
-          <td>{{ pred.created_at.strftime('%Y-%m-%d %H:%M') if pred.created_at else '' }}</td>
-          <td><a href="{{ url_for('predict.pdf_report', prediction_id=pred.id) }}">PDF</a></td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  </div>
-  {% else %}
-    <p class="empty">No predictions yet. <a href="{{ url_for('predict.form') }}">Run one →</a></p>
+  {% if metrics %}
+    <section class="panel" style="margin-top:24px;">
+      <h2>About the model</h2>
+      <dl class="kv">
+        <dt>Best model</dt><dd><strong>{{ metrics.best_model.name }}</strong></dd>
+        <dt>CV ROC-AUC</dt><dd>{{ '%0.4f' % metrics.best_model.cv_roc_auc_mean }} ± {{ '%0.4f' % metrics.best_model.cv_roc_auc_std }}</dd>
+        <dt>Trained</dt><dd>{{ metrics.trained_at[:10] }}</dd>
+      </dl>
+      <p style="margin-top:16px;"><a class="btn btn-secondary" href="{{ url_for('metrics.show') }}">Model report →</a></p>
+    </section>
   {% endif %}
-</section>
 
-<section class="panel">
-  <h2>Recent patients</h2>
-  {% if recent_patients %}
-  <div class="table-wrap">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Name</th>
-        <th class="num">Age</th>
-        <th>Risk</th>
-        <th class="num">Probability</th>
-        <th>Created</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for p in recent_patients %}
-        <tr>
-          <td>{{ p.id }}</td>
-          <td><a href="{{ url_for('patients.detail', patient_id=p.id) }}">{{ p.name }}</a></td>
-          <td class="num">{{ '%0.1f' % p.age }}</td>
-          <td>{{ m.pill(p.risk or '—', kind=(p.risk | lower) if p.risk else 'neutral') }}</td>
-          <td class="num">{{ '%0.2f' % (p.probability or 0) }}%</td>
-          <td>{{ p.created_at.strftime('%Y-%m-%d %H:%M') if p.created_at else '' }}</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  </div>
-  {% else %}
-    <p class="empty">No patients registered yet. <a href="{{ url_for('patients.new_patient') }}">Create one →</a></p>
+{# ================================================================== #}
+{# DOCTOR + ADMIN VIEW                                                 #}
+{# ================================================================== #}
+{% else %}
+  <section class="kpi-row">
+    {{ m.kpi_block("Total patients", total_patients, "in the registry", accent="var(--text)") }}
+    {{ m.kpi_block("Total predictions", total_predictions, "logged", accent="var(--primary)") }}
+    {{ m.kpi_block("Low risk", risk_counts.Low, "patients", accent="var(--success)") }}
+    {{ m.kpi_block("Moderate risk", risk_counts.Moderate, "patients", accent="var(--warning)") }}
+    {{ m.kpi_block("High risk", risk_counts.High, "patients", accent="var(--danger)") }}
+  </section>
+
+  <section class="grid-2-col">
+    <div class="panel">
+      <h2>Risk distribution</h2>
+      <div class="donut-wrap">
+        {{ charts.risk_donut(risk_counts) }}
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Model info</h2>
+      {% if metrics %}
+        <dl class="kv">
+          <dt>Best model</dt>
+          <dd><strong>{{ metrics.best_model.name }}</strong></dd>
+          <dt>CV ROC-AUC</dt>
+          <dd>{{ '%0.4f' % metrics.best_model.cv_roc_auc_mean }} ± {{ '%0.4f' % metrics.best_model.cv_roc_auc_std }}</dd>
+          <dt>Training rows</dt>
+          <dd>{{ metrics.dataset.rows }}</dd>
+          <dt>Trained</dt>
+          <dd>{{ metrics.trained_at[:10] }}</dd>
+        </dl>
+        <p style="margin-top:24px;"><a class="btn btn-secondary" href="{{ url_for('metrics.show') }}">View full report →</a></p>
+      {% else %}
+        <p class="muted">No evaluation report yet. Run <code>python -m ml.train --data heart.csv --version 1.0.0</code> to generate one.</p>
+        <p style="margin-top:16px;"><a class="btn btn-secondary" href="{{ url_for('metrics.show') }}">Open metrics →</a></p>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Recent predictions</h2>
+    {% if recent_predictions %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Patient</th>
+              <th>Risk</th>
+              <th class="num">Probability</th>
+              <th>Model</th>
+              <th>When</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pred in recent_predictions %}
+              <tr>
+                <td>{{ pred.id }}</td>
+                <td><a href="{{ url_for('patients.detail', patient_id=pred.patient_id) }}">#{{ pred.patient_id }}</a></td>
+                <td>{{ m.pill(pred.risk, kind=pred.risk | lower) }}</td>
+                <td class="num">{{ '%0.2f' % pred.probability }}%</td>
+                <td>{{ pred.model_version }}</td>
+                <td>{{ pred.created_at.strftime('%Y-%m-%d %H:%M') if pred.created_at else '' }}</td>
+                <td>
+                  <div class="action-menu">
+                    <a class="action-btn" href="{{ url_for('predict.pdf_report', prediction_id=pred.id) }}">PDF</a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="empty">No predictions yet. <a href="{{ url_for('predict.form') }}">Run one →</a></p>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Recent patients</h2>
+    {% if recent_patients %}
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th class="num">Age</th>
+              <th>Risk</th>
+              <th class="num">Probability</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in recent_patients %}
+              <tr>
+                <td>{{ p.id }}</td>
+                <td><a href="{{ url_for('patients.detail', patient_id=p.id) }}">{{ p.name }}</a></td>
+                <td class="num">{{ '%0.1f' % p.age }}</td>
+                <td>{{ m.pill(p.risk or '—', kind=(p.risk | lower) if p.risk else 'neutral') }}</td>
+                <td class="num">{{ '%0.2f' % (p.probability or 0) }}%</td>
+                <td>{{ p.created_at.strftime('%Y-%m-%d %H:%M') if p.created_at else '' }}</td>
+                <td>
+                  <div class="action-menu">
+                    <a class="action-btn" data-kind="primary" href="{{ url_for('predict.form', patient_id=p.id) }}">Predict</a>
+                    <a class="action-btn" data-kind="danger" href="{{ url_for('patients.detail', patient_id=p.id) }}">View</a>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="empty">No patients registered yet. <a href="{{ url_for('patients.new_patient') }}">Create one →</a></p>
+    {% endif %}
+  </section>
+
+  {% if current_user.is_admin %}
+    <section class="panel" style="margin-top:24px;">
+      <h2>Admin tools</h2>
+      <p class="muted" style="margin-top:-8px;">Manage users and review the audit log.</p>
+      <div class="grid-2-col" style="margin-top:16px;">
+        <div>
+          <h3 style="font-size:13px; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin:0 0 8px;">User management</h3>
+          <p style="color:var(--text); margin:0 0 12px;">Create, edit, and remove users. Set roles and area.</p>
+          <a class="btn btn-secondary" href="{{ url_for('admin.users') }}">Open users →</a>
+        </div>
+        <div>
+          <h3 style="font-size:13px; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin:0 0 8px;">Audit log</h3>
+          <p style="color:var(--text); margin:0 0 12px;">Full audit trail of every prediction: who, when, model, risk.</p>
+          <a class="btn btn-secondary" href="{{ url_for('admin.audit') }}">Open audit log →</a>
+        </div>
+      </div>
+    </section>
   {% endif %}
-</section>
+{% endif %}
 {% endblock %}

@@ -71,6 +71,39 @@ def detail(patient_id: int):
     return render_template("patients/detail.html", patient=patient, predictions=predictions)
 
 
+@bp.get("/<int:patient_id>/edit")
+@_doctor_required
+def edit(patient_id: int):
+    patient = db.session.get(Patient, patient_id)
+    if patient is None:
+        abort(404)
+    return render_template("patients/form.html", patient=patient)
+
+
+@bp.post("/<int:patient_id>/edit")
+@_doctor_required
+def update(patient_id: int):
+    patient = db.session.get(Patient, patient_id)
+    if patient is None:
+        abort(404)
+    form = request.form
+    patient.name = form.get("name", patient.name).strip() or patient.name
+    patient.age = float(form.get("age", patient.age))
+    patient.restingbp = float(form.get("restingbp", patient.restingbp))
+    patient.cholesterol = float(form.get("cholesterol", patient.cholesterol))
+    patient.fastingbs = int(float(form.get("fastingbs", patient.fastingbs)))
+    patient.maxhr = float(form.get("maxhr", patient.maxhr))
+    patient.oldpeak = float(form.get("oldpeak", patient.oldpeak))
+    patient.sex = form.get("sex", patient.sex)
+    patient.cp = form.get("cp", patient.cp)
+    patient.restecg = form.get("restecg", patient.restecg)
+    patient.exang = form.get("exang", patient.exang)
+    patient.slope = form.get("slope", patient.slope)
+    db.session.commit()
+    flash(f"Patient '{patient.name}' updated.", "success")
+    return redirect(url_for("patients.detail", patient_id=patient.id))
+
+
 @bp.post("/<int:patient_id>/delete")
 @_doctor_required
 def delete(patient_id: int):

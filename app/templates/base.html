@@ -26,9 +26,46 @@
             <a href="{{ url_for('admin.users') }}">Users</a>
             <a href="{{ url_for('admin.audit') }}">Audit</a>
           {% endif %}
-          <form method="post" action="{{ url_for('auth.logout') }}" class="inline-form">
-            <button class="btn btn-link" type="submit">{{ current_user.username }} / logout</button>
-          </form>
+
+          {# ---- User menu: avatar + dropdown for logout ---- #}
+          <div class="user-menu" data-user-menu>
+            <button type="button" class="user-menu-trigger" data-user-menu-trigger aria-haspopup="true" aria-expanded="false">
+              <span class="avatar avatar-doctor">{{ current_user.username[0]|upper }}</span>
+              <span class="user-menu-meta">
+                <span class="user-menu-name">{{ current_user.username }}</span>
+                <span class="user-menu-role user-menu-role-{{ current_user.role }}">{{ current_user.role }}</span>
+              </span>
+              <span class="user-menu-caret" aria-hidden="true">▾</span>
+            </button>
+            <div class="user-menu-panel" data-user-menu-panel role="menu">
+              <div class="user-menu-panel-header">
+                <span class="avatar avatar-lg avatar-doctor">{{ current_user.username[0]|upper }}</span>
+                <div>
+                  <div class="user-menu-panel-name">{{ current_user.username }}</div>
+                  <div class="user-menu-panel-meta">
+                    {% if current_user.area %}{{ current_user.area }} · {% endif %}<span class="role-badge role-badge-{{ current_user.role }}">{{ current_user.role }}</span>
+                  </div>
+                  {% if current_user.email %}<div class="user-menu-panel-email">{{ current_user.email }}</div>{% endif %}
+                </div>
+              </div>
+              <a class="user-menu-item" role="menuitem" href="{{ url_for('main.dashboard') }}">Dashboard</a>
+              <a class="user-menu-item" role="menuitem" href="{{ url_for('metrics.show') }}">Model metrics</a>
+              {% if current_user.is_patient %}
+                <a class="user-menu-item" role="menuitem" href="{{ url_for('predict.form') }}">Run a prediction</a>
+              {% endif %}
+              {% if current_user.is_doctor or current_user.is_admin %}
+                <a class="user-menu-item" role="menuitem" href="{{ url_for('patients.list_patients') }}">Patients</a>
+                <a class="user-menu-item" role="menuitem" href="{{ url_for('predict.form') }}">New prediction</a>
+              {% endif %}
+              {% if current_user.is_admin %}
+                <a class="user-menu-item" role="menuitem" href="{{ url_for('admin.users') }}">Users</a>
+                <a class="user-menu-item" role="menuitem" href="{{ url_for('admin.audit') }}">Audit log</a>
+              {% endif %}
+              <form method="post" action="{{ url_for('auth.logout') }}" class="user-menu-item user-menu-logout">
+                <button type="submit" class="user-menu-logout-btn">Sign out</button>
+              </form>
+            </div>
+          </div>
         {% else %}
           <a href="{{ url_for('metrics.show') }}">Metrics</a>
           <a href="{{ url_for('auth.login') }}">Sign in</a>
@@ -58,6 +95,43 @@
     </div>
   </footer>
 
-  {% block scripts %}{% endblock %}
+  {% block scripts %}
+  <script>
+    // User menu dropdown: toggle on click, close on outside click / Escape.
+    (function () {
+      const menus = document.querySelectorAll('[data-user-menu]');
+      menus.forEach((menu) => {
+        const trigger = menu.querySelector('[data-user-menu-trigger]');
+        const panel = menu.querySelector('[data-user-menu-panel]');
+        if (!trigger || !panel) return;
+        const close = () => {
+          menu.removeAttribute('data-open');
+          trigger.setAttribute('aria-expanded', 'false');
+        };
+        const toggle = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const open = menu.getAttribute('data-open') === 'true';
+          document.querySelectorAll('[data-user-menu][data-open="true"]').forEach((m) => {
+            m.removeAttribute('data-open');
+            const t = m.querySelector('[data-user-menu-trigger]');
+            if (t) t.setAttribute('aria-expanded', 'false');
+          });
+          if (!open) {
+            menu.setAttribute('data-open', 'true');
+            trigger.setAttribute('aria-expanded', 'true');
+          }
+        };
+        trigger.addEventListener('click', toggle);
+        document.addEventListener('click', (e) => {
+          if (!menu.contains(e.target)) close();
+        });
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') close();
+        });
+      });
+    })();
+  </script>
+  {% endblock %}
 </body>
 </html>

@@ -65,6 +65,7 @@ def home():
 def dashboard():
     recent_patients: list[Patient] = []
     recent_predictions: list[Prediction] = []
+    all_my_predictions: list[Prediction] = []
     metrics = _load_model_metrics()
 
     if current_user.is_doctor or current_user.is_admin:
@@ -75,12 +76,26 @@ def dashboard():
             Prediction.query.order_by(Prediction.created_at.desc()).limit(10).all()
         )
     elif current_user.is_patient:
-        recent_predictions = []
+        # Patients see only predictions they personally made (user_id == them).
+        # Predictions are linked to a Patient row that was created on the fly
+        # when the form was submitted without an existing patient_id.
+        recent_predictions = (
+            Prediction.query.filter_by(user_id=current_user.id)
+            .order_by(Prediction.created_at.desc())
+            .limit(10)
+            .all()
+        )
+        all_my_predictions = (
+            Prediction.query.filter_by(user_id=current_user.id)
+            .order_by(Prediction.created_at.desc())
+            .all()
+        )
 
     return render_template(
         "main/dashboard.html",
         recent_patients=recent_patients,
         recent_predictions=recent_predictions,
+        all_my_predictions=all_my_predictions,
         risk_counts=_risk_counts(),
         total_predictions=Prediction.query.count(),
         total_patients=Patient.query.count(),

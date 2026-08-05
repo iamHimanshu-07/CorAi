@@ -13,8 +13,19 @@
   --primary: #c8102e;       /* heart-red, used sparingly */
   --primary-dark: #9b0b22;
   --success: #1f7a3a;
+  --success-tint: #e6f3ea;
   --warning: #b6721d;
+  --warning-tint: #f7ecdb;
   --danger: #b91d2c;
+  --danger-tint: #f7e0e2;
+  --info: #1f4f8a;
+  --info-tint: #e3ecf6;
+  --accent-doctor: #1f6feb;    /* vibrant blue */
+  --accent-doctor-tint: #e3eefb;
+  --accent-patient: #1f7a3a;   /* vibrant green */
+  --accent-patient-tint: #e6f3ea;
+  --accent-admin: #7c3aed;     /* vibrant purple */
+  --accent-admin-tint: #efe6fa;
   --shadow-1: 0 1px 0 rgba(20,30,50,0.04);
   --shadow-2: 0 1px 2px rgba(20,30,50,0.04), 0 8px 24px rgba(20,30,50,0.04);
   --radius: 6px;
@@ -153,6 +164,211 @@ main.container { padding-top: 48px; padding-bottom: 96px; min-height: 60vh; }
   font-size: 14px;
 }
 .primary-nav .btn-link:hover { color: var(--text); border-bottom-color: var(--text); }
+
+/* ---------- User dropdown (top-right) ---------- */
+
+.user-menu {
+  position: relative;
+  display: inline-block;
+}
+.user-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px 6px 6px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.user-menu-trigger:hover,
+.user-menu-trigger:focus {
+  border-color: var(--text);
+  outline: none;
+}
+.user-menu[data-open="true"] .user-menu-trigger {
+  border-color: var(--text);
+}
+.user-menu-caret {
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid var(--muted);
+  border-bottom: 1.5px solid var(--muted);
+  transform: rotate(45deg);
+  margin-top: -3px;
+  margin-left: 2px;
+}
+.user-menu-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 240px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-2);
+  padding: 8px 0;
+  display: none;
+  z-index: 50;
+}
+.user-menu[data-open="true"] .user-menu-panel { display: block; }
+.user-menu-header,
+.user-menu-panel-header {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+.user-menu-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: -8px 0 6px;
+}
+.user-menu-header .uname,
+.user-menu-panel-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+  margin: 0 0 4px;
+  line-height: 1.2;
+}
+.user-menu-header .uarea,
+.user-menu-panel-email {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+  word-break: break-all;
+}
+.user-menu-panel-meta {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.user-menu-meta {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.15;
+}
+.user-menu-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.user-menu-role {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 1px;
+}
+.user-menu-role-doctor  { color: var(--accent-doctor); }
+.user-menu-role-patient { color: var(--accent-patient); }
+.user-menu-role-admin   { color: var(--accent-admin); }
+.user-menu-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.user-menu-list a,
+.user-menu-list button,
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  border-bottom: none;
+  transition: background 120ms ease;
+  text-decoration: none;
+}
+.user-menu-list a:hover,
+.user-menu-list button:hover,
+.user-menu-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+.user-menu-list form,
+.user-menu-logout form { margin: 0; }
+.user-menu-list .danger,
+.user-menu-logout-btn {
+  color: var(--danger);
+}
+.user-menu-logout-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+.user-menu-logout-btn:hover { color: var(--primary-dark); }
+
+/* ---------- Avatar (role-themed initial circle) ---------- */
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: #fff;
+  background: var(--muted);
+  flex-shrink: 0;
+}
+.avatar-doctor  { background: var(--accent-doctor); }
+.avatar-patient { background: var(--accent-patient); }
+.avatar-admin   { background: var(--accent-admin); }
+.avatar-lg {
+  width: 56px;
+  height: 56px;
+  font-size: 22px;
+}
+.avatar-xl {
+  width: 80px;
+  height: 80px;
+  font-size: 30px;
+}
+
+/* ---------- Role badge (color-coded pill) ---------- */
+
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid currentColor;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: transparent;
+  line-height: 1.4;
+}
+.role-badge-doctor  { color: var(--accent-doctor);  background: var(--accent-doctor-tint);  }
+.role-badge-patient { color: var(--accent-patient); background: var(--accent-patient-tint); }
+.role-badge-admin   { color: var(--accent-admin);   background: var(--accent-admin-tint);   }
 
 /* ---------- Footer ---------- */
 
@@ -550,6 +766,9 @@ section + section { margin-top: 64px; }
 .pill[data-kind="best"],     .badge-best     { color: var(--primary); }
 .pill[data-kind="neutral"],  .badge-neutral  { color: var(--muted); }
 .pill[data-kind="info"],     .badge-info     { color: var(--text); }
+.pill[data-kind="doctor"],   .badge-doctor   { color: var(--accent-doctor); }
+.pill[data-kind="patient"],  .badge-patient  { color: var(--accent-patient); }
+.pill[data-kind="admin"],    .badge-admin    { color: var(--accent-admin); }
 
 /* ---------- Tables ---------- */
 
@@ -953,3 +1172,176 @@ section + section { margin-top: 64px; }
 
 .delta-pos { color: var(--success); }
 .delta-neg { color: var(--danger); }
+
+/* ---------- Role-themed header tinting ---------- */
+
+.role-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  background: var(--surface);
+  box-shadow: var(--shadow-1);
+}
+.role-banner[data-role="doctor"]  { border-left-color: var(--accent-doctor);  background: var(--accent-doctor-tint);  }
+.role-banner[data-role="patient"] { border-left-color: var(--accent-patient); background: var(--accent-patient-tint); }
+.role-banner[data-role="admin"]   { border-left-color: var(--accent-admin);   background: var(--accent-admin-tint);   }
+.role-banner .role-banner-title {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+.role-banner .role-banner-meta { color: var(--muted); font-size: 13px; }
+.role-banner .role-banner-meta strong { color: var(--text); font-weight: 500; }
+
+/* ---------- Role scope summary card ---------- */
+
+.role-scope {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 0 24px;
+}
+.role-scope .scope-tile {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-1);
+}
+.role-scope .scope-tile[data-state="yes"] { border-left: 3px solid var(--success); }
+.role-scope .scope-tile[data-state="no"]  { border-left: 3px solid var(--border-strong); opacity: 0.7; }
+.role-scope .scope-tile h4 {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 6px;
+}
+.role-scope .scope-tile p { color: var(--muted); font-size: 13px; margin: 0; line-height: 1.4; }
+.role-scope .scope-tile .scope-state {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--muted);
+  display: inline-block;
+  margin-top: 8px;
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+}
+.role-scope .scope-tile[data-state="yes"] .scope-state {
+  color: var(--success);
+  border-color: var(--success);
+}
+@media (max-width: 720px) {
+  .role-scope { grid-template-columns: 1fr; }
+}
+
+/* ---------- Action menu (Edit / Delete) ---------- */
+
+.action-menu { display: inline-flex; gap: 6px; align-items: center; }
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+}
+.action-btn:hover { border-color: var(--text); }
+.action-btn[data-kind="danger"]:hover { border-color: var(--danger); color: var(--danger); }
+.action-btn[data-kind="primary"]:hover { border-color: var(--accent-doctor); color: var(--accent-doctor); }
+
+/* ---------- Patient predictions view ---------- */
+
+.patient-predictions-empty {
+  text-align: center;
+  padding: 56px 24px;
+  border: 1px dashed var(--border-strong);
+  background: var(--surface);
+  margin-top: 16px;
+}
+.patient-predictions-empty p { color: var(--muted); margin: 0 0 16px; max-width: 40ch; margin-left: auto; margin-right: auto; }
+
+.prediction-card {
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  background: var(--surface);
+  padding: 18px 22px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 20px;
+  box-shadow: var(--shadow-1);
+  margin-bottom: 10px;
+}
+.prediction-card[data-risk="High"]     { border-left-color: var(--danger); }
+.prediction-card[data-risk="Moderate"] { border-left-color: var(--warning); }
+.prediction-card[data-risk="Low"]      { border-left-color: var(--success); }
+.prediction-card .pred-prob {
+  font-family: var(--font-num);
+  font-feature-settings: "tnum" 1;
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  line-height: 1;
+}
+.prediction-card .pred-prob small {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-left: 2px;
+}
+.prediction-card .pred-body { min-width: 0; }
+.prediction-card .pred-body h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 4px;
+  color: var(--text);
+}
+.prediction-card .pred-body p { font-size: 12px; color: var(--muted); margin: 0; }
+.prediction-card .pred-actions { display: flex; gap: 8px; align-items: center; }
+@media (max-width: 640px) {
+  .prediction-card { grid-template-columns: 1fr; }
+}
+
+/* ---------- Subhead with hairline underline ---------- */
+
+.subhead {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--muted);
+  margin: 24px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ---------- KPI tile accent variants ---------- */
+
+.kpi-block[data-accent="doctor"]  { --accent: var(--accent-doctor);  }
+.kpi-block[data-accent="patient"] { --accent: var(--accent-patient); }
+.kpi-block[data-accent="admin"]   { --accent: var(--accent-admin);   }
+.kpi-block[data-accent="info"]    { --accent: var(--info);           }
+.kpi-block[data-accent="warning"] { --accent: var(--warning);         }
+.kpi-block[data-accent="danger"]  { --accent: var(--danger);          }
+.kpi-block[data-accent="success"] { --accent: var(--success);         }
+.kpi-block[data-accent="primary"] { --accent: var(--primary);         }

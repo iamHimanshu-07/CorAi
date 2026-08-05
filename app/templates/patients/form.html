@@ -1,64 +1,69 @@
 {% extends "base.html" %}
-{% block title %}New patient · HDPS{% endblock %}
+{% block title %}{% if patient %}Edit {{ patient.name }}{% else %}New patient{% endif %} · HDPS{% endblock %}
 {% block content %}
 <header class="page-header">
   <div>
-    <h1>New patient</h1>
-    <p class="muted">Add a patient to the registry. 11 clinical features used by the model.</p>
+    <h1>{% if patient %}Edit {{ patient.name }}{% else %}New patient{% endif %}</h1>
+    <p class="muted">{% if patient %}Update this patient's clinical features.{% else %}Add a patient to the registry. 11 clinical features used by the model.{% endif %}</p>
   </div>
-  <p><a class="btn btn-secondary" href="{{ url_for('patients.list_patients') }}">← Back</a></p>
+  <p><a class="btn btn-secondary" href="{% if patient %}{{ url_for('patients.detail', patient_id=patient.id) }}{% else %}{{ url_for('patients.list_patients') }}{% endif %}">← Back</a></p>
 </header>
 
-<form method="post" action="{{ url_for('patients.create_patient') }}" class="form-card">
+<form method="post" action="{% if patient %}{{ url_for('patients.update', patient_id=patient.id) }}{% else %}{{ url_for('patients.create_patient') }}{% endif %}" class="form-card">
   <div class="form-section">
     <h3>Identity</h3>
     <div class="grid-2">
-      <label>Name <input name="name" required></label>
-      <label>Age (years) <input name="age" type="number" step="0.1" min="0" max="120" required></label>
+      <label>Name <input name="name" required value="{{ patient.name if patient else '' }}"></label>
+      <label>Age (years) <input name="age" type="number" step="0.1" min="0" max="120" required value="{{ patient.age if patient else '' }}"></label>
     </div>
   </div>
 
   <div class="form-section">
     <h3>Clinical measurements</h3>
     <div class="grid-2">
-      <label>Resting BP (mmHg) <input name="restingbp" type="number" step="0.1" min="0" max="300" required></label>
-      <label>Cholesterol (mg/dL) <input name="cholesterol" type="number" step="0.1" min="0" max="1000" required></label>
+      <label>Resting BP (mmHg) <input name="restingbp" type="number" step="0.1" min="0" max="300" required value="{{ patient.restingbp if patient else '' }}"></label>
+      <label>Cholesterol (mg/dL) <input name="cholesterol" type="number" step="0.1" min="0" max="1000" required value="{{ patient.cholesterol if patient else '' }}"></label>
       <label>Fasting BS &gt; 120 mg/dL
-        <select name="fastingbs"><option value="0">No (0)</option><option value="1">Yes (1)</option></select>
+        <select name="fastingbs">
+          <option value="0" {% if patient and patient.fastingbs == 0 %}selected{% endif %}>No (0)</option>
+          <option value="1" {% if patient and patient.fastingbs == 1 %}selected{% endif %}>Yes (1)</option>
+        </select>
       </label>
-      <label>Max HR (bpm) <input name="maxhr" type="number" step="0.1" min="0" max="300" required></label>
-      <label>Oldpeak (ST depression) <input name="oldpeak" type="number" step="0.1" min="-5" max="10" required></label>
+      <label>Max HR (bpm) <input name="maxhr" type="number" step="0.1" min="0" max="300" required value="{{ patient.maxhr if patient else '' }}"></label>
+      <label>Oldpeak (ST depression) <input name="oldpeak" type="number" step="0.1" min="-5" max="10" required value="{{ patient.oldpeak if patient else '' }}"></label>
       <label>Sex
         <select name="sex">
-          <option value="M">Male</option><option value="F">Female</option>
+          <option value="M" {% if not patient or patient.sex == 'M' %}selected{% endif %}>Male</option>
+          <option value="F" {% if patient and patient.sex == 'F' %}selected{% endif %}>Female</option>
         </select>
       </label>
       <label>Chest pain type
         <select name="cp">
-          <option>ATA</option><option>NAP</option><option>ASY</option><option>TA</option>
+          {% for v in ['ATA','NAP','ASY','TA'] %}<option {% if patient and patient.cp == v %}selected{% endif %}>{{ v }}</option>{% endfor %}
         </select>
       </label>
       <label>Resting ECG
         <select name="restecg">
-          <option>Normal</option><option>ST</option><option>LVH</option>
+          {% for v in ['Normal','ST','LVH'] %}<option {% if patient and patient.restecg == v %}selected{% endif %}>{{ v }}</option>{% endfor %}
         </select>
       </label>
       <label>Exercise angina
         <select name="exang">
-          <option value="N">No</option><option value="Y">Yes</option>
+          <option value="N" {% if not patient or patient.exang == 'N' %}selected{% endif %}>No</option>
+          <option value="Y" {% if patient and patient.exang == 'Y' %}selected{% endif %}>Yes</option>
         </select>
       </label>
       <label>ST slope
         <select name="slope">
-          <option>Up</option><option>Flat</option><option>Down</option>
+          {% for v in ['Up','Flat','Down'] %}<option {% if patient and patient.slope == v %}selected{% endif %}>{{ v }}</option>{% endfor %}
         </select>
       </label>
     </div>
   </div>
 
   <div class="form-actions">
-    <button type="submit" class="btn btn-primary">Create patient</button>
-    <a class="btn btn-secondary" href="{{ url_for('patients.list_patients') }}">Cancel</a>
+    <button type="submit" class="btn btn-primary">{% if patient %}Save changes{% else %}Create patient{% endif %}</button>
+    <a class="btn btn-secondary" href="{% if patient %}{{ url_for('patients.detail', patient_id=patient.id) }}{% else %}{{ url_for('patients.list_patients') }}{% endif %}">Cancel</a>
   </div>
 </form>
 {% endblock %}

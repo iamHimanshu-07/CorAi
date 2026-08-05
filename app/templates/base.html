@@ -10,7 +10,7 @@
   <header class="site-header">
     <div class="container">
       <a class="brand" href="{{ url_for('main.home') }}">
-        <span class="brand-mark">♥</span>
+        <span class="brand-mark">◬</span>
         <span class="brand-text">HDPS</span>
         <span class="brand-sub">Heart Disease Prediction</span>
       </a>
@@ -21,16 +21,16 @@
             <a href="{{ url_for('patients.list_patients') }}">Patients</a>
             <a href="{{ url_for('predict.form') }}">New prediction</a>
           {% endif %}
-          <a href="{{ url_for('metrics.show') }}">Model metrics</a>
+          <a href="{{ url_for('metrics.show') }}">Metrics</a>
           {% if current_user.is_admin %}
             <a href="{{ url_for('admin.users') }}">Users</a>
             <a href="{{ url_for('admin.audit') }}">Audit</a>
           {% endif %}
           <form method="post" action="{{ url_for('auth.logout') }}" class="inline-form">
-            <button class="btn btn-link" type="submit">Logout ({{ current_user.username }})</button>
+            <button class="btn btn-link" type="submit">{{ current_user.username }} / logout</button>
           </form>
         {% else %}
-          <a href="{{ url_for('metrics.show') }}">Model metrics</a>
+          <a href="{{ url_for('metrics.show') }}">Metrics</a>
           <a href="{{ url_for('auth.login') }}">Sign in</a>
           <a href="{{ url_for('auth.register') }}">Register</a>
         {% endif %}
@@ -54,7 +54,7 @@
 
   <footer class="site-footer">
     <div class="container">
-      <small>Educational use only. Not a clinical diagnosis. <a href="{{ url_for('metrics.show') }}">Model metrics</a> · <a href="{{ url_for('static', filename='MODEL_CARD.md') }}">MODEL_CARD</a></small>
+      <small>Educational use only. Not a clinical diagnosis. <a href="{{ url_for('metrics.show') }}">Model metrics</a> · <a href="{{ url_for('static', filename='MODEL_CARD.md') }}">MODEL_CARD</a> · v1.0.0</small>
     </div>
   </footer>
 

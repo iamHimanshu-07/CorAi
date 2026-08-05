@@ -1,72 +1,73 @@
 {% extends "base.html" %}
 {% import "_charts.html" as charts %}
+{% import "_macros.html" as m %}
 {% block title %}Heart Disease Prediction System{% endblock %}
 {% block content %}
 <section class="hero">
   <div class="hero-grid">
     <div>
-      <h1>Heart Disease <span class="hl">Prediction</span></h1>
+      <h1>Heart disease risk, <strong>scored in 92&nbsp;ms.</strong></h1>
       <p class="lede">A calibrated ensemble classifier trained on the UCI heart-disease dataset. It turns 11 routine clinical measurements into a probability and a Low / Moderate / High risk band — auditable, explainable, and free to study.</p>
-      <p class="warning">⚠️ Educational use only. Not a clinical diagnosis.</p>
+      <p class="warning">Educational use only. Not a clinical diagnosis.</p>
       <p class="cta">
         {% if current_user.is_authenticated %}
-          <a class="btn btn-primary" href="{{ url_for('main.dashboard') }}">Go to dashboard</a>
+          <a class="btn btn-primary" href="{{ url_for('main.dashboard') }}">Go to dashboard →</a>
           <a class="btn btn-secondary" href="{{ url_for('predict.form') }}">Run a prediction</a>
         {% else %}
-          <a class="btn btn-primary" href="{{ url_for('auth.login') }}">Sign in</a>
+          <a class="btn btn-primary" href="{{ url_for('auth.login') }}">Sign in →</a>
           <a class="btn btn-secondary" href="{{ url_for('auth.register') }}">Register as patient</a>
         {% endif %}
       </p>
     </div>
     <div class="hero-art">
-      {{ charts.gauge(62) }}
-      <p class="muted center">Sample output: 62% probability, Moderate risk band.</p>
+      <div class="kpi-block" style="--accent: var(--primary);">
+        <div class="kpi-label">Best CV ROC-AUC</div>
+        <div class="kpi-value">
+          {% if metrics %}{{ '%0.4f' % metrics.best_model.cv_roc_auc_mean }}{% else %}—{% endif %}
+        </div>
+        <div class="kpi-sub">
+          {% if metrics %}5-fold · {{ metrics.best_model.name }}{% else %}run ml/train first{% endif %}
+        </div>
+      </div>
+      <div class="kpi-block" style="--accent: var(--success);">
+        <div class="kpi-label">Training rows</div>
+        <div class="kpi-value">
+          {% if metrics %}{{ metrics.dataset.rows }}{% else %}—{% endif %}
+        </div>
+        <div class="kpi-sub">
+          {% if metrics %}features: {{ metrics.dataset.features | length }}{% else %}run ml/train first{% endif %}
+        </div>
+      </div>
+      <div class="kpi-block" style="--accent: var(--text);">
+        <div class="kpi-label">Calibration</div>
+        <div class="kpi-value">5-fold</div>
+        <div class="kpi-sub">isotonic CV</div>
+      </div>
     </div>
   </div>
 </section>
 
 <section class="kpi-row">
-  {{ charts.kpi_tile("Predictions logged", total_predictions, "across all users") }}
-  {{ charts.kpi_tile("Patients", total_patients, "in the active registry") }}
-  {% if metrics %}
-    {{ charts.kpi_tile("Best CV ROC-AUC", '%0.4f' % metrics.best_model.cv_roc_auc_mean,
-          '5-fold · ' ~ metrics.best_model.name, color="var(--primary)") }}
-    {{ charts.kpi_tile("Training rows", metrics.dataset.rows,
-          'features: ' ~ (metrics.dataset.features | length), color="var(--success)") }}
-  {% else %}
-    {{ charts.kpi_tile("Best CV ROC-AUC", "—", "run ml/train first", color="var(--primary)") }}
-    {{ charts.kpi_tile("Training rows", "—", "run ml/train first", color="var(--success)") }}
-  {% endif %}
+  {{ m.kpi_block("Predictions logged", total_predictions, "across all users", accent="var(--primary)") }}
+  {{ m.kpi_block("Patients", total_patients, "in the active registry", accent="var(--text)") }}
+  {{ m.kpi_block("Low risk", risk_counts.Low, "patients", accent="var(--success)") }}
+  {{ m.kpi_block("High risk", risk_counts.High, "patients", accent="var(--danger)") }}
 </section>
 
 <section class="panel">
   <h2>What it does</h2>
-  <div class="card-grid">
-    <article class="card">
-      <div class="card-icon">①</div>
-      <h3>Collect 11 features</h3>
-      <p>Age, resting blood pressure, cholesterol, fasting blood sugar, max heart rate, ST depression (oldpeak), sex, chest pain type, resting ECG, exercise angina, ST slope.</p>
-    </article>
-    <article class="card">
-      <div class="card-icon">②</div>
-      <h3>Preprocess & calibrate</h3>
-      <p>Numerics are standardized, categoricals are one-hot encoded. The classifier wrapping is isotonic-calibrated with 5-fold cross-validation so predicted probabilities are meaningful.</p>
-    </article>
-    <article class="card">
-      <div class="card-icon">③</div>
-      <h3>Score & band</h3>
-      <p>The highest-CV-AUC model from Logistic Regression, Random Forest, XGBoost, and LightGBM returns a probability (0–100%) and a Low / Moderate / High band.</p>
-    </article>
-    <article class="card">
-      <div class="card-icon">④</div>
-      <h3>Audit & explain</h3>
-      <p>Every prediction is persisted with the input features, model version, and the user that triggered it. SHAP feature contributions are shown on the result page.</p>
-    </article>
-  </div>
+  {{ m.step_flow([
+    (1, "Collect", "Age, resting blood pressure, cholesterol, fasting blood sugar, max heart rate, ST depression, sex, chest pain type, resting ECG, exercise angina, ST slope."),
+    (2, "Preprocess", "Numerics are standardized, categoricals are one-hot encoded. SMOTE balances the positive class."),
+    (3, "Calibrate", "Isotonic calibration with 5-fold stratified CV so predicted probabilities are meaningful, not just ranks."),
+    (4, "Score", "The highest-CV-AUC model from Logistic Regression, Random Forest, XGBoost, LightGBM returns a probability (0–100%)."),
+    (5, "Audit", "Every prediction is persisted with input features, model version, user, and SHAP feature contributions."),
+  ]) }}
 </section>
 
 <section class="panel">
   <h2>Live predictions</h2>
+  <p class="muted" style="margin-top:-8px;">{{ total_predictions }} total · updated whenever a prediction is logged.</p>
   <div class="donut-wrap">
     {{ charts.risk_donut(risk_counts) }}
   </div>
@@ -74,7 +75,7 @@
 
 <section class="panel">
   <h2>How to use the API</h2>
-  <p class="muted">Same input schema as the form, JSON in / JSON out, strict Pydantic v2 validation.</p>
+  <p class="muted">Same input schema as the form. JSON in / JSON out, strict Pydantic v2 validation, 4&nbsp;MB body limit.</p>
   <pre><code>POST /v1/predict
 Content-Type: application/json
 
@@ -85,6 +86,6 @@ Content-Type: application/json
   "Sex": "F", "ChestPainType": "ASY",
   "RestingECG": "Normal", "ExerciseAngina": "N", "ST_Slope": "Flat"
 }</code></pre>
-  <p>See <a href="{{ url_for('metrics.show') }}">Model metrics</a> for live ROC-AUC, calibration plots, and SHAP summary.</p>
+  <p style="margin-top:14px;">See <a href="{{ url_for('metrics.show') }}">Model metrics</a> for live ROC-AUC, calibration plots, and the SHAP summary.</p>
 </section>
 {% endblock %}

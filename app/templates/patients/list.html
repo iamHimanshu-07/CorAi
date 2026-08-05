@@ -1,10 +1,11 @@
 {% extends "base.html" %}
+{% import "_macros.html" as m %}
 {% block title %}Patients · HDPS{% endblock %}
 {% block content %}
 <header class="page-header">
   <div>
     <h1>Patients</h1>
-    <p class="muted">{{ patients|length }} patient{{ '' if patients|length == 1 else 's' }} in the registry. Grouped by latest risk band.</p>
+    <p class="muted">{{ patients|length }} patient{{ '' if patients|length == 1 else 's' }} in the registry · grouped by latest risk band.</p>
   </div>
   <p><a class="btn btn-primary" href="{{ url_for('patients.new_patient') }}">+ New patient</a></p>
 </header>
@@ -20,7 +21,7 @@
   {% if group %}
   <section class="panel">
     <header class="group-header">
-      <h2><span class="badge badge-{{ risk | lower }}">{{ risk }} risk</span> · {{ group|length }} patient{{ '' if group|length == 1 else 's' }}</h2>
+      <h2>{{ m.pill(risk ~ ' risk', kind=risk | lower) }} <span class="muted" style="font-weight:400; text-transform:none; letter-spacing:0;">· {{ group|length }} patient{{ '' if group|length == 1 else 's' }}</span></h2>
     </header>
     <div class="patient-grid">
       {% for p in group %}
@@ -31,10 +32,11 @@
               <p class="muted">#{{ p.id }} · {{ '%0.0f' % p.age }}y {{ p.sex }}</p>
             </div>
             <div class="patient-card-prob">
-              <span class="big">{{ '%0.0f' % (p.probability or 0) }}%</span>
+              <span class="big">{{ '%0.0f' % (p.probability or 0) }}<small style="font-size:14px; color:var(--muted); margin-left:2px;">%</small></span>
+              <p class="muted">probability</p>
             </div>
           </div>
-          <dl class="kv kv-mini">
+          <dl class="kv-mini">
             <dt>BP</dt><dd>{{ '%0.0f' % p.restingbp }}</dd>
             <dt>Chol</dt><dd>{{ '%0.0f' % p.cholesterol }}</dd>
             <dt>MaxHR</dt><dd>{{ '%0.0f' % p.maxhr }}</dd>
@@ -53,21 +55,23 @@
 
 {% if by_risk.unknown %}
 <section class="panel">
-  <h2>Unclassified ({{ by_risk.unknown|length }})</h2>
+  <h2>Unclassified <span class="muted" style="font-weight:400;">· {{ by_risk.unknown|length }}</span></h2>
   <p class="muted">Patients without a prediction yet. Run a prediction to assign a risk band.</p>
+  <div class="table-wrap">
   <table class="table">
-    <thead><tr><th>#</th><th>Name</th><th>Age</th><th>Created</th></tr></thead>
+    <thead><tr><th>#</th><th>Name</th><th class="num">Age</th><th>Created</th></tr></thead>
     <tbody>
     {% for p in by_risk.unknown %}
       <tr>
         <td>{{ p.id }}</td>
         <td><a href="{{ url_for('patients.detail', patient_id=p.id) }}">{{ p.name }}</a></td>
-        <td>{{ '%0.1f' % p.age }}</td>
+        <td class="num">{{ '%0.1f' % p.age }}</td>
         <td>{{ p.created_at.strftime('%Y-%m-%d') if p.created_at else '' }}</td>
       </tr>
     {% endfor %}
     </tbody>
   </table>
+  </div>
 </section>
 {% endif %}
 

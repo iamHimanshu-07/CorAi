@@ -14,6 +14,8 @@ bp = Blueprint("metrics", __name__)
 
 def _report_path() -> Path:
     repo = Path(current_app.root_path).resolve().parents[1]
+    if not (repo / "ml" / "evaluation" / "report.json").exists():
+        repo = repo / "Heart-Disease-Prediction-System"
     return repo / "ml" / "evaluation" / "report.json"
 
 
@@ -47,6 +49,8 @@ def artifact(artifact: str):
     if ".." in artifact:
         abort(404)
     repo = Path(current_app.root_path).resolve().parents[1]
+    if not (repo / "ml" / "evaluation").exists():
+        repo = repo / "Heart-Disease-Prediction-System"
     base = (repo / "ml" / "evaluation").resolve()
     out = (base / artifact).resolve()
     if not str(out).startswith(str(base)):

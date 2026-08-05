@@ -1,40 +1,61 @@
 {% extends "base.html" %}
+{% import "_charts.html" as charts %}
+{% import "_macros.html" as m %}
 {% block title %}{{ patient.name }} · HDPS{% endblock %}
 {% block content %}
-<h1>{{ patient.name }}</h1>
-<dl class="kv">
-  <dt>Age</dt><dd>{{ '%0.1f' % patient.age }}</dd>
-  <dt>Resting BP</dt><dd>{{ '%0.0f' % patient.restingbp }}</dd>
-  <dt>Cholesterol</dt><dd>{{ '%0.0f' % patient.cholesterol }}</dd>
-  <dt>Fasting BS</dt><dd>{{ patient.fastingbs }}</dd>
-  <dt>Max HR</dt><dd>{{ '%0.0f' % patient.maxhr }}</dd>
-  <dt>Oldpeak</dt><dd>{{ '%0.2f' % patient.oldpeak }}</dd>
-  <dt>Sex</dt><dd>{{ patient.sex }}</dd>
-  <dt>Chest pain</dt><dd>{{ patient.cp }}</dd>
-  <dt>Resting ECG</dt><dd>{{ patient.restecg }}</dd>
-  <dt>Exercise angina</dt><dd>{{ patient.exang }}</dd>
-  <dt>ST slope</dt><dd>{{ patient.slope }}</dd>
-</dl>
+<header class="page-header">
+  <div>
+    <h1>{{ patient.name }}</h1>
+    <p class="muted">#{{ patient.id }} · {{ '%0.0f' % patient.age }}y {{ patient.sex }}{% if patient.risk %} · {{ m.pill(patient.risk ~ ' risk', kind=patient.risk | lower) }}{% endif %}</p>
+  </div>
+  <p>
+    <a class="btn btn-secondary" href="{{ url_for('patients.list_patients') }}">← Back to registry</a>
+    <a class="btn btn-primary" href="{{ url_for('predict.form') }}?patient_id={{ patient.id }}">Run prediction →</a>
+  </p>
+</header>
 
-<p><a class="btn btn-primary" href="{{ url_for('predict.form') }}?patient_id={{ patient.id }}">Run prediction for this patient</a></p>
+<section class="grid-2-col">
+  <div class="panel">
+    <h2>Vitals</h2>
+    <dl class="kv">
+      <dt>Age</dt><dd>{{ '%0.1f' % patient.age }} years</dd>
+      <dt>Resting BP</dt><dd>{{ '%0.0f' % patient.restingbp }} mmHg</dd>
+      <dt>Cholesterol</dt><dd>{{ '%0.0f' % patient.cholesterol }} mg/dL</dd>
+      <dt>Fasting BS</dt><dd>{{ patient.fastingbs }} ({{ 'elevated' if patient.fastingbs else 'normal' }})</dd>
+      <dt>Max HR</dt><dd>{{ '%0.0f' % patient.maxhr }} bpm</dd>
+      <dt>Oldpeak</dt><dd>{{ '%0.2f' % patient.oldpeak }}</dd>
+      <dt>Sex</dt><dd class="label">{{ 'Male' if patient.sex == 'M' else 'Female' }}</dd>
+      <dt>Chest pain</dt><dd class="label">{{ patient.cp }}</dd>
+      <dt>Resting ECG</dt><dd class="label">{{ patient.restecg }}</dd>
+      <dt>Exercise angina</dt><dd class="label">{{ 'Yes' if patient.exang == 'Y' else 'No' }}</dd>
+      <dt>ST slope</dt><dd class="label">{{ patient.slope }}</dd>
+    </dl>
+  </div>
 
-<h2>Prediction history</h2>
-{% if predictions %}
-<table class="table">
-  <thead><tr><th>ID</th><th>Probability</th><th>Risk</th><th>Model</th><th>When</th></tr></thead>
-  <tbody>
-  {% for pred in predictions %}
-    <tr>
-      <td>{{ pred.id }}</td>
-      <td>{{ '%0.2f' % pred.probability }}%</td>
-      <td><span class="badge badge-{{ pred.risk | lower }}">{{ pred.risk }}</span></td>
-      <td>{{ pred.model_version }}</td>
-      <td>{{ pred.created_at.strftime('%Y-%m-%d %H:%M') if pred.created_at else '' }}</td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
-{% else %}
-<p class="empty">No predictions logged for this patient yet.</p>
-{% endif %}
+  <div class="panel">
+    <h2>Prediction history</h2>
+    {% if predictions %}
+    <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>#</th><th class="num">Probability</th><th>Risk</th><th>Model</th><th>When</th><th></th></tr></thead>
+      <tbody>
+      {% for pred in predictions %}
+        <tr>
+          <td>{{ pred.id }}</td>
+          <td class="num">{{ '%0.2f' % pred.probability }}%</td>
+          <td>{{ m.pill(pred.risk, kind=pred.risk | lower) }}</td>
+          <td>{{ pred.model_version }}</td>
+          <td>{{ pred.created_at.strftime('%Y-%m-%d %H:%M') if pred.created_at else '' }}</td>
+          <td><a href="{{ url_for('predict.pdf_report', prediction_id=pred.id) }}">PDF</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+      <p class="empty">No predictions logged for this patient yet.</p>
+      <p style="text-align:center;"><a class="btn btn-primary" href="{{ url_for('predict.form') }}?patient_id={{ patient.id }}">Run the first prediction →</a></p>
+    {% endif %}
+  </div>
+</section>
 {% endblock %}

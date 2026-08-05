@@ -1,1 +1,26 @@
-{# Shared macro file. Keep template-level helpers here. #}
+{# Shared macro file. #}
+
+{% macro step_flow(steps, current=None) %}
+{# steps = [(num, label, copy), ...]; current = num of the active step (optional) #}
+<ol class="step-flow">
+  {% for num, label, copy in steps %}
+    <li class="step {% if current == num %}current{% endif %}">
+      <span class="step-num">{{ '%02d' % num }}</span>
+      <div class="step-label">{{ label }}</div>
+      <p class="step-copy">{{ copy }}</p>
+    </li>
+  {% endfor %}
+</ol>
+{% endmacro %}
+
+{% macro pill(text, kind="neutral") %}
+<span class="pill" data-kind="{{ kind }}">{{ text }}</span>
+{% endmacro %}
+
+{% macro kpi_block(label, value, sub=None, accent=None) %}
+<div class="kpi-block" {% if accent %}style="--accent: {{ accent }}"{% endif %}>
+  <div class="kpi-label">{{ label }}</div>
+  <div class="kpi-value">{{ value }}</div>
+  {% if sub %}<div class="kpi-sub">{{ sub }}</div>{% endif %}
+</div>
+{% endmacro %}

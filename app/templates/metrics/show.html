@@ -1,47 +1,33 @@
 {% extends "base.html" %}
 {% import "_charts.html" as charts %}
+{% import "_macros.html" as m %}
 {% block title %}Model metrics · HDPS{% endblock %}
 {% block content %}
-<h1>Model metrics</h1>
-<p class="muted">Performance of the calibrated ensemble trained on the UCI heart-disease dataset. Best model: <strong>{{ report.best_model.name }}</strong> · version {{ report.dataset.rows|default('?') }} rows · trained {{ report.trained_at[:10] }}.</p>
+<header class="page-header">
+  <div>
+    <h1>{{ report.best_model.name }} <span class="muted" style="font-size:18px; font-weight:400;">· model report</span></h1>
+    <p class="muted">Version {{ report.model_version | default('1.0.0') }} · trained {{ report.trained_at[:10] }} · {{ report.dataset.rows }} rows · {{ report.dataset.features | length }} features.</p>
+  </div>
+</header>
 
 {% set best = report.best_model %}
 {% set models = report.models %}
 
 <section class="kpi-row">
-  {{ charts.kpi_tile(
-        "Best CV ROC-AUC",
-        '%0.4f' % best.cv_roc_auc_mean,
-        '± ' ~ '%0.4f' % best.cv_roc_auc_std,
-        color="var(--primary)"
-  ) }}
-  {{ charts.kpi_tile(
-        "Best model",
-        best.name,
-        'selected by 5-fold CV'
-  ) }}
-  {{ charts.kpi_tile(
-        "Training rows",
-        report.dataset.rows,
-        'features: ' ~ (report.dataset.features | length),
-        color="var(--success)"
-  ) }}
-  {{ charts.kpi_tile(
-        "Positive rate",
-        '%0.1f' % (report.dataset.positive_rate * 100) ~ '%',
-        'class balance',
-        color="var(--warning)"
-  ) }}
+  {{ charts.kpi_tile("Best CV ROC-AUC", '%0.4f' % best.cv_roc_auc_mean, '± ' ~ '%0.4f' % best.cv_roc_auc_std, color="var(--primary)") }}
+  {{ charts.kpi_tile("Training rows", report.dataset.rows, 'features: ' ~ (report.dataset.features | length), color="var(--success)") }}
+  {{ charts.kpi_tile("Positive rate", '%0.1f' % (report.dataset.positive_rate * 100) ~ '%', 'class balance', color="var(--warning)") }}
+  {{ charts.kpi_tile("Selected by", '5-fold CV', best.name, color="var(--text)") }}
 </section>
 
 <section class="panel">
-  <h2>Per-model ROC-AUC (5-fold CV)</h2>
+  <h2>Per-model ROC-AUC</h2>
   {% set chart_rows = [] %}
-  {% for m in models %}
+  {% for mdl in models %}
     {% set chart_rows = chart_rows + [{
-      'label': m.name,
-      'value': m.cv_roc_auc_mean,
-      'color': 'var(--primary)' if m.name == best.name else 'var(--muted)'
+      'label': mdl.name,
+      'value': mdl.cv_roc_auc_mean,
+      'color': 'var(--primary)' if mdl.name == best.name else 'var(--muted)'
     }] %}
   {% endfor %}
   {{ charts.bar_chart(chart_rows) }}
@@ -49,59 +35,68 @@
 
 <section class="panel">
   <h2>Per-model detail</h2>
+  <div class="table-wrap">
   <table class="table">
     <thead>
       <tr>
         <th>Model</th>
-        <th>Accuracy</th>
-        <th>Precision</th>
-        <th>Recall</th>
-        <th>F1</th>
-        <th>ROC-AUC</th>
-        <th>Brier</th>
-        <th>CV ROC-AUC</th>
+        <th class="num">Accuracy</th>
+        <th class="num">Precision</th>
+        <th class="num">Recall</th>
+        <th class="num">F1</th>
+        <th class="num">ROC-AUC</th>
+        <th class="num">Brier</th>
+        <th class="num">CV ROC-AUC</th>
       </tr>
     </thead>
     <tbody>
-      {% for m in models %}
-        <tr {% if m.name == best.name %}class="best-row"{% endif %}>
+      {% for mdl in models %}
+        <tr {% if mdl.name == best.name %}class="best-row"{% endif %}>
           <td>
-            <strong>{{ m.name }}</strong>
-            {% if m.name == best.name %}<span class="badge badge-low">best</span>{% endif %}
+            <strong>{{ mdl.name }}</strong>
+            {% if mdl.name == best.name %}{{ m.pill('best', kind='best') }}{% endif %}
           </td>
-          <td>{{ '%0.3f' % m.metrics.accuracy }}</td>
-          <td>{{ '%0.3f' % m.metrics.precision }}</td>
-          <td>{{ '%0.3f' % m.metrics.recall }}</td>
-          <td>{{ '%0.3f' % m.metrics.f1 }}</td>
-          <td>{{ '%0.3f' % m.metrics.roc_auc }}</td>
-          <td>{{ '%0.4f' % m.metrics.brier }}</td>
-          <td>{{ '%0.4f' % m.cv_roc_auc_mean }} ± {{ '%0.4f' % m.cv_roc_auc_std }}</td>
+          <td class="num">{{ '%0.3f' % mdl.metrics.accuracy }}</td>
+          <td class="num">{{ '%0.3f' % mdl.metrics.precision }}</td>
+          <td class="num">{{ '%0.3f' % mdl.metrics.recall }}</td>
+          <td class="num">{{ '%0.3f' % mdl.metrics.f1 }}</td>
+          <td class="num">{{ '%0.3f' % mdl.metrics.roc_auc }}</td>
+          <td class="num">{{ '%0.4f' % mdl.metrics.brier }}</td>
+          <td class="num">{{ '%0.4f' % mdl.cv_roc_auc_mean }} ± {{ '%0.4f' % mdl.cv_roc_auc_std }}</td>
         </tr>
       {% endfor %}
     </tbody>
   </table>
+  </div>
 </section>
 
 <section class="panel">
   <h2>Diagnostics</h2>
   <div class="chart-grid">
-    {% for m in models %}
+    {% for mdl in models %}
       <article class="chart-card">
-        <h3>{{ m.name }}</h3>
+        <header class="chart-card-header">
+          <h3>{{ mdl.name }}</h3>
+          {% if mdl.name == best.name %}{{ m.pill('best', kind='best') }}{% endif %}
+        </header>
         <div class="img-pair">
-          <a href="{{ url_for('metrics.artifact', artifact=m.name ~ '_roc.png') }}" target="_blank" rel="noopener">
-            <img src="{{ url_for('metrics.artifact', artifact=m.name ~ '_roc.png') }}" alt="ROC curve for {{ m.name }}" loading="lazy">
+          <a href="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_roc.png') }}" target="_blank" rel="noopener">
+            <img src="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_roc.png') }}" alt="ROC curve for {{ mdl.name }}" loading="lazy">
+            <span class="img-cap">ROC</span>
           </a>
-          <a href="{{ url_for('metrics.artifact', artifact=m.name ~ '_confusion_matrix.png') }}" target="_blank" rel="noopener">
-            <img src="{{ url_for('metrics.artifact', artifact=m.name ~ '_confusion_matrix.png') }}" alt="Confusion matrix for {{ m.name }}" loading="lazy">
+          <a href="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_pr.png') }}" target="_blank" rel="noopener">
+            <img src="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_pr.png') }}" alt="PR curve for {{ mdl.name }}" loading="lazy">
+            <span class="img-cap">PR</span>
           </a>
         </div>
         <div class="img-pair">
-          <a href="{{ url_for('metrics.artifact', artifact=m.name ~ '_pr.png') }}" target="_blank" rel="noopener">
-            <img src="{{ url_for('metrics.artifact', artifact=m.name ~ '_pr.png') }}" alt="PR curve for {{ m.name }}" loading="lazy">
+          <a href="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_confusion_matrix.png') }}" target="_blank" rel="noopener">
+            <img src="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_confusion_matrix.png') }}" alt="Confusion matrix for {{ mdl.name }}" loading="lazy">
+            <span class="img-cap">Confusion</span>
           </a>
-          <a href="{{ url_for('metrics.artifact', artifact=m.name ~ '_calibration.png') }}" target="_blank" rel="noopener">
-            <img src="{{ url_for('metrics.artifact', artifact=m.name ~ '_calibration.png') }}" alt="Calibration for {{ m.name }}" loading="lazy">
+          <a href="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_calibration.png') }}" target="_blank" rel="noopener">
+            <img src="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_calibration.png') }}" alt="Calibration for {{ mdl.name }}" loading="lazy">
+            <span class="img-cap">Calibration</span>
           </a>
         </div>
       </article>
@@ -111,7 +106,7 @@
 
 <section class="panel">
   <h2>SHAP summary (best model)</h2>
-  <p class="muted">Global feature importance from SHAP. Each row is a feature; each dot is a single test-set prediction.</p>
+  <p class="muted">Global feature importance. Each row is a feature; each dot is a single test-set prediction.</p>
   <a href="{{ url_for('metrics.artifact', artifact='shap_summary.png') }}" target="_blank" rel="noopener">
     <img src="{{ url_for('metrics.artifact', artifact='shap_summary.png') }}" alt="SHAP summary" class="full-img">
   </a>

@@ -1,16 +1,33 @@
 {% extends "base.html" %}
+{% import "_macros.html" as m %}
 {% block title %}Users · Admin · HDPS{% endblock %}
 {% block content %}
-<h1>Users</h1>
+<header class="page-header">
+  <div>
+    <h1>Users</h1>
+    <p class="muted">{{ users|length }} user{{ '' if users|length == 1 else 's' }} registered.</p>
+  </div>
+</header>
+
+<div class="table-wrap">
 <table class="table">
-  <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Created</th><th>Change role</th></tr></thead>
+  <thead>
+    <tr>
+      <th class="num">ID</th>
+      <th>Username</th>
+      <th>Email</th>
+      <th>Role</th>
+      <th>Created</th>
+      <th>Change role</th>
+    </tr>
+  </thead>
   <tbody>
   {% for u in users %}
     <tr>
-      <td>{{ u.id }}</td>
-      <td>{{ u.username }}</td>
+      <td class="num">{{ u.id }}</td>
+      <td><strong>{{ u.username }}</strong></td>
       <td>{{ u.email or '—' }}</td>
-      <td><strong>{{ u.role }}</strong></td>
+      <td>{{ m.pill(u.role, kind='neutral') }}</td>
       <td>{{ u.created_at.strftime('%Y-%m-%d') if u.created_at else '' }}</td>
       <td>
         <form method="post" action="{{ url_for('admin.change_role', user_id=u.id) }}" class="inline-form">
@@ -26,4 +43,5 @@
   {% endfor %}
   </tbody>
 </table>
+</div>
 {% endblock %}

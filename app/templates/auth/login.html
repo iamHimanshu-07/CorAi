@@ -1,12 +1,20 @@
 {% extends "base.html" %}
 {% block title %}Sign in · HDPS{% endblock %}
 {% block content %}
-<h1>Sign in</h1>
-<form method="post" action="{{ url_for('auth.login') }}" class="form-card">
-  <label>Username <input name="username" required autofocus></label>
-  <label>Password <input name="password" type="password" required></label>
+<header class="page-header" style="border-bottom:none; padding-bottom:0; margin-bottom:32px;">
+  <div>
+    <h1>Sign in</h1>
+    <p class="muted">Access your patient registry and prediction history.</p>
+  </div>
+</header>
+
+<form method="post" action="{{ url_for('auth.login') }}" class="form-card center">
+  <label>Username <input name="username" autocomplete="username" required autofocus></label>
+  <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
   <label class="checkbox"><input type="checkbox" name="remember"> Remember me</label>
-  <button type="submit" class="btn btn-primary">Sign in</button>
-  <p class="muted">No account? <a href="{{ url_for('auth.register') }}">Register as patient</a>.</p>
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary" style="flex:1;">Sign in</button>
+  </div>
+  <p class="muted" style="margin: 24px 0 0; text-align:center;">No account? <a href="{{ url_for('auth.register') }}">Register as patient →</a></p>
 </form>
 {% endblock %}

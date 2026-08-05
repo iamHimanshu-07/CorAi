@@ -1,9 +1,14 @@
 {% extends "base.html" %}
 {% import "_charts.html" as charts %}
+{% import "_macros.html" as m %}
 {% block title %}Model metrics · HDPS{% endblock %}
 {% block content %}
-<h1>Model metrics</h1>
-<p class="muted">No evaluation report yet. Run <code>python -m ml.train --data heart.csv --version 1.0.0</code> to generate one.</p>
+<header class="page-header">
+  <div>
+    <h1>Model metrics</h1>
+    <p class="muted">No evaluation report yet. Generate one with <code>python -m ml.train --data heart.csv --version 1.0.0</code>.</p>
+  </div>
+</header>
 
 <section class="panel">
   <h2>Live prediction distribution</h2>
@@ -11,5 +16,15 @@
     {{ charts.risk_donut(counts) }}
   </div>
   <p class="muted">Total predictions logged: <strong>{{ total }}</strong>.</p>
+</section>
+
+<section class="panel">
+  <h2>How a report is produced</h2>
+  {{ m.step_flow([
+    (1, "Collect", "UCI heart-disease dataset, 11 routine features."),
+    (2, "Train", "Logistic regression, Random forest, XGBoost, LightGBM."),
+    (3, "Evaluate", "5-fold CV: ROC-AUC, PR-AUC, Brier, calibration."),
+    (4, "Report", "Per-model metrics + diagnostics + SHAP summary."),
+  ], current=4) }}
 </section>
 {% endblock %}

@@ -1,39 +1,69 @@
 {% extends "base.html" %}
+{% import "_charts.html" as charts %}
 {% block title %}Dashboard · HDPS{% endblock %}
 {% block content %}
-<h1>Dashboard</h1>
-<p class="muted">Signed in as <strong>{{ current_user.username }}</strong> ({{ current_user.role }}).</p>
+<header class="page-header">
+  <h1>Dashboard</h1>
+  <p class="muted">Signed in as <strong>{{ current_user.username }}</strong> · role <strong>{{ current_user.role }}</strong>.</p>
+</header>
 
-{% if recent_patients %}
-  <section class="panel">
-    <h2>Recent patients</h2>
-    <table class="table">
-      <thead><tr><th>ID</th><th>Name</th><th>Risk</th><th>Probability</th><th>Created</th></tr></thead>
-      <tbody>
-      {% for p in recent_patients %}
-        <tr>
-          <td>{{ p.id }}</td>
-          <td><a href="{{ url_for('patients.detail', patient_id=p.id) }}">{{ p.name }}</a></td>
-          <td>{{ p.risk or '—' }}</td>
-          <td>{{ '%0.2f' % (p.probability or 0) }}%</td>
-          <td>{{ p.created_at.strftime('%Y-%m-%d %H:%M') if p.created_at else '' }}</td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </section>
-{% endif %}
+<section class="kpi-row">
+  {{ charts.kpi_tile("Total patients", total_patients, "in the registry") }}
+  {{ charts.kpi_tile("Total predictions", total_predictions, "logged") }}
+  {{ charts.kpi_tile("Low risk", risk_counts.Low, "patients", color="var(--success)") }}
+  {{ charts.kpi_tile("Moderate risk", risk_counts.Moderate, "patients", color="var(--warning)") }}
+  {{ charts.kpi_tile("High risk", risk_counts.High, "patients", color="var(--danger)") }}
+</section>
 
-{% if recent_predictions %}
-  <section class="panel">
-    <h2>Recent predictions</h2>
-    <table class="table">
-      <thead><tr><th>ID</th><th>Patient</th><th>Risk</th><th>Probability</th><th>Model</th><th>When</th><th>PDF</th></tr></thead>
-      <tbody>
+<section class="grid-2-col">
+  <div class="panel">
+    <h2>Risk distribution</h2>
+    <div class="donut-wrap">
+      {{ charts.risk_donut(risk_counts) }}
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Model info</h2>
+    {% if metrics %}
+      <dl class="kv">
+        <dt>Best model</dt>
+        <dd><strong>{{ metrics.best_model.name }}</strong></dd>
+        <dt>CV ROC-AUC</dt>
+        <dd>{{ '%0.4f' % metrics.best_model.cv_roc_auc_mean }} ± {{ '%0.4f' % metrics.best_model.cv_roc_auc_std }}</dd>
+        <dt>Training rows</dt>
+        <dd>{{ metrics.dataset.rows }}</dd>
+        <dt>Trained</dt>
+        <dd>{{ metrics.trained_at[:19] }}</dd>
+      </dl>
+      <p><a class="btn btn-secondary" href="{{ url_for('metrics.show') }}">View full report →</a></p>
+    {% else %}
+      <p class="muted">No evaluation report yet. Run <code>python -m ml.train --data heart.csv --version 1.0.0</code> to generate one.</p>
+      <p><a class="btn btn-secondary" href="{{ url_for('metrics.show') }}">Open metrics →</a></p>
+    {% endif %}
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Recent predictions</h2>
+  {% if recent_predictions %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Patient</th>
+        <th>Risk</th>
+        <th>Probability</th>
+        <th>Model</th>
+        <th>When</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
       {% for pred in recent_predictions %}
         <tr>
           <td>{{ pred.id }}</td>
-          <td>{{ pred.patient_id }}</td>
+          <td><a href="{{ url_for('patients.detail', patient_id=pred.patient_id) }}">#{{ pred.patient_id }}</a></td>
           <td><span class="badge badge-{{ pred.risk | lower }}">{{ pred.risk }}</span></td>
           <td>{{ '%0.2f' % pred.probability }}%</td>
           <td>{{ pred.model_version }}</td>
@@ -41,12 +71,42 @@
           <td><a href="{{ url_for('predict.pdf_report', prediction_id=pred.id) }}">PDF</a></td>
         </tr>
       {% endfor %}
-      </tbody>
-    </table>
-  </section>
-{% endif %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="empty">No predictions yet. <a href="{{ url_for('predict.form') }}">Run one →</a></p>
+  {% endif %}
+</section>
 
-{% if not recent_patients and not recent_predictions %}
-  <p class="empty">No activity yet. <a href="{{ url_for('predict.form') }}">Run a prediction</a> to get started.</p>
-{% endif %}
+<section class="panel">
+  <h2>Recent patients</h2>
+  {% if recent_patients %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Name</th>
+        <th>Age</th>
+        <th>Risk</th>
+        <th>Probability</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in recent_patients %}
+        <tr>
+          <td>{{ p.id }}</td>
+          <td><a href="{{ url_for('patients.detail', patient_id=p.id) }}">{{ p.name }}</a></td>
+          <td>{{ '%0.1f' % p.age }}</td>
+          <td>{{ p.risk or '—' }}</td>
+          <td>{{ '%0.2f' % (p.probability or 0) }}%</td>
+          <td>{{ p.created_at.strftime('%Y-%m-%d %H:%M') if p.created_at else '' }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="empty">No patients registered yet. <a href="{{ url_for('patients.new_patient') }}">Create one →</a></p>
+  {% endif %}
+</section>
 {% endblock %}

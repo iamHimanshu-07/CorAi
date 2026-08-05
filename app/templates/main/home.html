@@ -1,32 +1,90 @@
 {% extends "base.html" %}
+{% import "_charts.html" as charts %}
 {% block title %}Heart Disease Prediction System{% endblock %}
 {% block content %}
 <section class="hero">
-  <h1>Heart Disease Prediction System</h1>
-  <p class="lede">Calibrated ensemble classifier on routine clinical measurements. Per-prediction audit log. SHAP explanations.</p>
-  <p class="warning">⚠️ Educational use only. Not a clinical diagnosis.</p>
-  {% if not current_user.is_authenticated %}
-    <p>
-      <a class="btn btn-primary" href="{{ url_for('auth.login') }}">Sign in</a>
-      <a class="btn btn-secondary" href="{{ url_for('auth.register') }}">Register as patient</a>
-    </p>
+  <div class="hero-grid">
+    <div>
+      <h1>Heart Disease <span class="hl">Prediction</span></h1>
+      <p class="lede">A calibrated ensemble classifier trained on the UCI heart-disease dataset. It turns 11 routine clinical measurements into a probability and a Low / Moderate / High risk band — auditable, explainable, and free to study.</p>
+      <p class="warning">⚠️ Educational use only. Not a clinical diagnosis.</p>
+      <p class="cta">
+        {% if current_user.is_authenticated %}
+          <a class="btn btn-primary" href="{{ url_for('main.dashboard') }}">Go to dashboard</a>
+          <a class="btn btn-secondary" href="{{ url_for('predict.form') }}">Run a prediction</a>
+        {% else %}
+          <a class="btn btn-primary" href="{{ url_for('auth.login') }}">Sign in</a>
+          <a class="btn btn-secondary" href="{{ url_for('auth.register') }}">Register as patient</a>
+        {% endif %}
+      </p>
+    </div>
+    <div class="hero-art">
+      {{ charts.gauge(62) }}
+      <p class="muted center">Sample output: 62% probability, Moderate risk band.</p>
+    </div>
+  </div>
+</section>
+
+<section class="kpi-row">
+  {{ charts.kpi_tile("Predictions logged", total_predictions, "across all users") }}
+  {{ charts.kpi_tile("Patients", total_patients, "in the active registry") }}
+  {% if metrics %}
+    {{ charts.kpi_tile("Best CV ROC-AUC", '%0.4f' % metrics.best_model.cv_roc_auc_mean,
+          '5-fold · ' ~ metrics.best_model.name, color="var(--primary)") }}
+    {{ charts.kpi_tile("Training rows", metrics.dataset.rows,
+          'features: ' ~ (metrics.dataset.features | length), color="var(--success)") }}
   {% else %}
-    <p><a class="btn btn-primary" href="{{ url_for('main.dashboard') }}">Go to dashboard</a></p>
+    {{ charts.kpi_tile("Best CV ROC-AUC", "—", "run ml/train first", color="var(--primary)") }}
+    {{ charts.kpi_tile("Training rows", "—", "run ml/train first", color="var(--success)") }}
   {% endif %}
 </section>
 
-<section class="card-grid">
-  <article class="card">
-    <h2>11 features</h2>
-    <p>Age, resting BP, cholesterol, fasting blood sugar, max heart rate, ST depression, sex, chest pain type, resting ECG, exercise angina, ST slope.</p>
-  </article>
-  <article class="card">
-    <h2>Calibrated probabilities</h2>
-    <p>Logistic Regression, Random Forest, XGBoost, LightGBM, isotonic-calibrated. Best by 5-fold CV ROC-AUC.</p>
-  </article>
-  <article class="card">
-    <h2>Auditable</h2>
-    <p>Every prediction persists with input features, model version, and the user who triggered it.</p>
-  </article>
+<section class="panel">
+  <h2>What it does</h2>
+  <div class="card-grid">
+    <article class="card">
+      <div class="card-icon">①</div>
+      <h3>Collect 11 features</h3>
+      <p>Age, resting blood pressure, cholesterol, fasting blood sugar, max heart rate, ST depression (oldpeak), sex, chest pain type, resting ECG, exercise angina, ST slope.</p>
+    </article>
+    <article class="card">
+      <div class="card-icon">②</div>
+      <h3>Preprocess & calibrate</h3>
+      <p>Numerics are standardized, categoricals are one-hot encoded. The classifier wrapping is isotonic-calibrated with 5-fold cross-validation so predicted probabilities are meaningful.</p>
+    </article>
+    <article class="card">
+      <div class="card-icon">③</div>
+      <h3>Score & band</h3>
+      <p>The highest-CV-AUC model from Logistic Regression, Random Forest, XGBoost, and LightGBM returns a probability (0–100%) and a Low / Moderate / High band.</p>
+    </article>
+    <article class="card">
+      <div class="card-icon">④</div>
+      <h3>Audit & explain</h3>
+      <p>Every prediction is persisted with the input features, model version, and the user that triggered it. SHAP feature contributions are shown on the result page.</p>
+    </article>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Live predictions</h2>
+  <div class="donut-wrap">
+    {{ charts.risk_donut(risk_counts) }}
+  </div>
+</section>
+
+<section class="panel">
+  <h2>How to use the API</h2>
+  <p class="muted">Same input schema as the form, JSON in / JSON out, strict Pydantic v2 validation.</p>
+  <pre><code>POST /v1/predict
+Content-Type: application/json
+
+{
+  "name": "Jane Doe",
+  "Age": 54, "RestingBP": 130, "Cholesterol": 250,
+  "FastingBS": 0, "MaxHR": 145, "Oldpeak": 1.5,
+  "Sex": "F", "ChestPainType": "ASY",
+  "RestingECG": "Normal", "ExerciseAngina": "N", "ST_Slope": "Flat"
+}</code></pre>
+  <p>See <a href="{{ url_for('metrics.show') }}">Model metrics</a> for live ROC-AUC, calibration plots, and SHAP summary.</p>
 </section>
 {% endblock %}

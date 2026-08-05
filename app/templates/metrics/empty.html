@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% import "_charts.html" as charts %}
+{% block title %}Model metrics · HDPS{% endblock %}
+{% block content %}
+<h1>Model metrics</h1>
+<p class="muted">No evaluation report yet. Run <code>python -m ml.train --data heart.csv --version 1.0.0</code> to generate one.</p>
+
+<section class="panel">
+  <h2>Live prediction distribution</h2>
+  <div class="donut-wrap">
+    {{ charts.risk_donut(counts) }}
+  </div>
+  <p class="muted">Total predictions logged: <strong>{{ total }}</strong>.</p>
+</section>
+{% endblock %}

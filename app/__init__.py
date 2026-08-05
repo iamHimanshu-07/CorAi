@@ -38,6 +38,7 @@ def create_app(config_object: str | object = "config.Config") -> Flask:
     from .blueprints.auth.routes import bp as auth_bp
     from .blueprints.fhir.routes import bp as fhir_bp
     from .blueprints.main.routes import bp as main_bp
+    from .blueprints.metrics.routes import bp as metrics_bp
     from .blueprints.patients.routes import bp as patients_bp
     from .blueprints.predict.routes import bp as predict_bp
 
@@ -48,6 +49,7 @@ def create_app(config_object: str | object = "config.Config") -> Flask:
     app.register_blueprint(api_bp, url_prefix="/v1")
     app.register_blueprint(admin_bp)
     app.register_blueprint(fhir_bp, url_prefix="/fhir")
+    app.register_blueprint(metrics_bp)
 
     # Health checks
     from .health import bp as health_bp
@@ -60,6 +62,10 @@ def create_app(config_object: str | object = "config.Config") -> Flask:
     # CLI
     from .cli import register_cli
     register_cli(app)
+
+    # Demo data seeder (dev convenience; no-op once the DB has any patients)
+    from .demo_data import register_seed
+    register_seed(app)
 
     # Lazy first-run schema creation (dev convenience). In production, run
     # `flask init-db` or rely on migrations.

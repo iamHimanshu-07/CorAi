@@ -1,0 +1,100 @@
+{# Inline SVG chart helpers. No external deps.
+   All macros take a `data` dict and emit a self-contained <svg>.
+   Colors are pulled from the CSS custom properties via <style> tags. #}
+
+{% macro kpi_tile(label, value, sub=None, color=None) %}
+<div class="kpi" {% if color %}style="--accent: {{ color }}"{% endif %}>
+  <div class="kpi-value">{{ value }}</div>
+  <div class="kpi-label">{{ label }}</div>
+  {% if sub %}<div class="kpi-sub">{{ sub }}</div>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro bar_chart(data, max_value=None, height=160, label_width=80) %}
+{# data = [{"label": "...", "value": 0.94, "color": "var(--primary)"}, ...] #}
+{% set max_v = max_value or (data | map(attribute='value') | list | max) or 1 %}
+<div class="chart">
+  {% for row in data %}
+  <div class="bar-row">
+    <div class="bar-label">{{ row.label }}</div>
+    <div class="bar-track">
+      <div class="bar-fill" style="width: {{ (row.value / max_v * 100) if max_v else 0 }}%; background: {{ row.color or 'var(--primary)' }};"></div>
+    </div>
+    <div class="bar-value">{{ '%0.3f' % row.value if row.value < 10 else '%0.2f' % row.value }}{% if row.suffix %}{{ row.suffix }}{% endif %}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endmacro %}
+
+{% macro risk_donut(counts) %}
+{# counts = {"Low": N, "Moderate": N, "High": N} #}
+{% set total = (counts.values() | sum) or 1 %}
+{% set colors = {"Low": "var(--success)", "Moderate": "var(--warning)", "High": "var(--danger)"} %}
+{% set order = ["Low", "Moderate", "High"] %}
+<svg viewBox="0 0 200 200" class="donut" aria-label="Risk distribution">
+  <circle cx="100" cy="100" r="70" fill="none" stroke="#f1f3f8" stroke-width="28"></circle>
+  {% set ns = namespace(acc=0) %}
+  {% for risk in order %}
+    {% set c = counts.get(risk, 0) %}
+    {% if c > 0 %}
+      {% set frac = c / total %}
+      <circle cx="100" cy="100" r="70" fill="none"
+              stroke="{{ colors[risk] }}" stroke-width="28"
+              stroke-dasharray="{{ frac * 439.82 }} 439.82"
+              stroke-dashoffset="{{ -ns.acc }}"
+              transform="rotate(-90 100 100)"></circle>
+      {% set ns.acc = ns.acc + frac * 439.82 %}
+    {% endif %}
+  {% endfor %}
+  <text x="100" y="98" text-anchor="middle" class="donut-total">{{ total }}</text>
+  <text x="100" y="120" text-anchor="middle" class="donut-cap">predictions</text>
+</svg>
+<ul class="donut-legend">
+  {% for risk in order %}
+    {% set c = counts.get(risk, 0) %}
+    <li><span class="dot" style="background:{{ colors[risk] }}"></span> {{ risk }} <strong>{{ c }}</strong></li>
+  {% endfor %}
+</ul>
+{% endmacro %}
+
+{% macro timeline_sparkline(values, height=40, color="var(--primary)") %}
+{# values = list of numeric values, oldest -> newest #}
+{% set n = values | length %}
+{% if n < 2 %}
+  <svg viewBox="0 0 {{ [n * 10, 10] | max }} {{ height }}" class="sparkline"><text x="2" y="{{ height/2 }}">—</text></svg>
+{% else %}
+  {% set min_v = values | min %}
+  {% set max_v = values | max %}
+  {% set range_v = (max_v - min_v) or 1 %}
+  {% set step = 100 / (n - 1) %}
+  {% set points = [] %}
+  {% for v in values %}
+    {% set x = loop.index0 * step %}
+    {% set y = height - ((v - min_v) / range_v) * (height - 4) - 2 %}
+    {% set _ = points.append("%.1f,%.1f" % (x, y)) %}
+  {% endfor %}
+  <svg viewBox="0 0 100 {{ height }}" preserveAspectRatio="none" class="sparkline" aria-label="trend">
+    <polyline fill="none" stroke="{{ color }}" stroke-width="1.5" points="{{ points | join(' ') }}"></polyline>
+  </svg>
+{% endif %}
+{% endmacro %}
+
+{% macro gauge(probability) %}
+{# 0..100 -> semi-circle gauge #}
+{% set angle = (probability / 100) * 180 - 90 %}
+<svg viewBox="0 0 200 120" class="gauge" aria-label="Risk gauge">
+  <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#eef0f5" stroke-width="18" stroke-linecap="round"></path>
+  {% set frac = probability / 100 %}
+  {% if probability <= 30 %}
+    {% set col = 'var(--success)' %}
+  {% elif probability <= 60 %}
+    {% set col = 'var(--warning)' %}
+  {% else %}
+    {% set col = 'var(--danger)' %}
+  {% endif %}
+  <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="{{ col }}" stroke-width="18" stroke-linecap="round"
+        stroke-dasharray="{{ frac * 251.3 }} 251.3"></path>
+  <text x="100" y="92" text-anchor="middle" class="gauge-value">{{ '%0.1f' % probability }}%</text>
+</svg>
+{% endmacro %}
+</content>

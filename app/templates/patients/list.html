@@ -1,31 +1,77 @@
 {% extends "base.html" %}
 {% block title %}Patients · HDPS{% endblock %}
 {% block content %}
-<h1>Patients</h1>
-<p><a class="btn btn-primary" href="{{ url_for('patients.new_patient') }}">New patient</a></p>
+<header class="page-header">
+  <div>
+    <h1>Patients</h1>
+    <p class="muted">{{ patients|length }} patient{{ '' if patients|length == 1 else 's' }} in the registry. Grouped by latest risk band.</p>
+  </div>
+  <p><a class="btn btn-primary" href="{{ url_for('patients.new_patient') }}">+ New patient</a></p>
+</header>
 
-{% if patients %}
-<table class="table">
-  <thead><tr><th>ID</th><th>Name</th><th>Age</th><th>Risk</th><th>Probability</th><th>Created</th><th></th></tr></thead>
-  <tbody>
-  {% for p in patients %}
-    <tr>
-      <td>{{ p.id }}</td>
-      <td><a href="{{ url_for('patients.detail', patient_id=p.id) }}">{{ p.name }}</a></td>
-      <td>{{ '%0.1f' % p.age }}</td>
-      <td>{{ p.risk or '—' }}</td>
-      <td>{{ '%0.2f' % (p.probability or 0) }}%</td>
-      <td>{{ p.created_at.strftime('%Y-%m-%d') if p.created_at else '' }}</td>
-      <td>
-        <form method="post" action="{{ url_for('patients.delete', patient_id=p.id) }}" onsubmit="return confirm('Delete {{ p.name }}?');" class="inline-form">
-          <button type="submit" class="btn btn-link danger">Delete</button>
-        </form>
-      </td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
-{% else %}
-<p class="empty">No patients yet.</p>
+{% set by_risk = {'High': [], 'Moderate': [], 'Low': [], 'unknown': []} %}
+{% for p in patients %}
+  {% set key = p.risk if p.risk in by_risk else 'unknown' %}
+  {{ by_risk[key].append(p) or '' }}
+{% endfor %}
+
+{% for risk in ('High', 'Moderate', 'Low') %}
+  {% set group = by_risk[risk] %}
+  {% if group %}
+  <section class="panel">
+    <header class="group-header">
+      <h2><span class="badge badge-{{ risk | lower }}">{{ risk }} risk</span> · {{ group|length }} patient{{ '' if group|length == 1 else 's' }}</h2>
+    </header>
+    <div class="patient-grid">
+      {% for p in group %}
+        <article class="patient-card patient-card-{{ risk | lower }}">
+          <div class="patient-card-top">
+            <div>
+              <h3><a href="{{ url_for('patients.detail', patient_id=p.id) }}">{{ p.name }}</a></h3>
+              <p class="muted">#{{ p.id }} · {{ '%0.0f' % p.age }}y {{ p.sex }}</p>
+            </div>
+            <div class="patient-card-prob">
+              <span class="big">{{ '%0.0f' % (p.probability or 0) }}%</span>
+            </div>
+          </div>
+          <dl class="kv kv-mini">
+            <dt>BP</dt><dd>{{ '%0.0f' % p.restingbp }}</dd>
+            <dt>Chol</dt><dd>{{ '%0.0f' % p.cholesterol }}</dd>
+            <dt>MaxHR</dt><dd>{{ '%0.0f' % p.maxhr }}</dd>
+            <dt>Oldpeak</dt><dd>{{ '%0.1f' % p.oldpeak }}</dd>
+          </dl>
+          <form method="post" action="{{ url_for('patients.delete', patient_id=p.id) }}"
+                onsubmit="return confirm('Delete {{ p.name }}?');" class="inline-form">
+            <button type="submit" class="btn btn-link danger">Delete</button>
+          </form>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+{% endfor %}
+
+{% if by_risk.unknown %}
+<section class="panel">
+  <h2>Unclassified ({{ by_risk.unknown|length }})</h2>
+  <p class="muted">Patients without a prediction yet. Run a prediction to assign a risk band.</p>
+  <table class="table">
+    <thead><tr><th>#</th><th>Name</th><th>Age</th><th>Created</th></tr></thead>
+    <tbody>
+    {% for p in by_risk.unknown %}
+      <tr>
+        <td>{{ p.id }}</td>
+        <td><a href="{{ url_for('patients.detail', patient_id=p.id) }}">{{ p.name }}</a></td>
+        <td>{{ '%0.1f' % p.age }}</td>
+        <td>{{ p.created_at.strftime('%Y-%m-%d') if p.created_at else '' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+{% if not patients %}
+<p class="empty">No patients yet. <a href="{{ url_for('patients.new_patient') }}">Create one →</a></p>
 {% endif %}
 {% endblock %}

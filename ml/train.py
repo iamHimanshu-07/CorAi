@@ -37,6 +37,14 @@ import joblib
 import matplotlib
 
 matplotlib.use("Agg")  # headless
+
+# Pull in the shared SHAP dispatcher from the app package so train + inference
+# use the same explainer-selection logic.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from app.shap_utils import HAS_SHAP, make_explainer  # noqa: E402
+
+if HAS_SHAP:
+    import shap  # noqa: E402
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -63,7 +71,9 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 # `n_jobs=-1` triggers joblib/loky multiprocessing, which crashes on Windows
 # with Python 3.14+ (WinError 6: invalid handle in DuplicateHandle). Allow
 # users to opt into parallelism explicitly via env var; default to 1 for
-# cross-platform safety.
+# cross-platform safety. We also pin `LOKY_MAX_CPU_COUNT` so joblib/loky's
+# worker auto-detection stops spawning `wmic` (which is gone on Windows 11).
+os.environ.setdefault("LOKY_MAX_CPU_COUNT", str(os.cpu_count() or 4))
 N_JOBS = int(os.getenv("HDPS_N_JOBS", "1"))
 
 # Optional heavy deps — degrade gracefully if absent
@@ -78,12 +88,6 @@ try:
     HAS_XGBOOST = True
 except Exception:
     HAS_XGBOOST = False
-
-try:
-    import shap  # noqa: F401
-    HAS_SHAP = True
-except Exception:
-    HAS_SHAP = False
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
 log = logging.getLogger("hdps.train")
@@ -239,7 +243,7 @@ def shap_summary(pipeline: ImbPipeline, X_test: pd.DataFrame, out_dir: Path) -> 
         # Transform features
         Xt = preprocessor.transform(X_test)
         feature_names = preprocessor.get_feature_names_out().tolist()
-        explainer = shap.TreeExplainer(inner) if HAS_XGBOOST or HAS_LIGHTGBM else shap.Explainer(inner, Xt)
+        explainer = make_explainer(inner, Xt)
         sv = explainer(Xt[:200])
         shap.summary_plot(sv, features=Xt[:200], feature_names=feature_names, show=False)
         _save_fig(plt.gcf(), out_dir / "shap_summary.png")

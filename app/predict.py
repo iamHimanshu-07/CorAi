@@ -14,6 +14,8 @@ from typing import Any
 
 import joblib
 
+from .shap_utils import HAS_SHAP, make_explainer
+
 log = logging.getLogger(__name__)
 
 NUMERIC_COLS = ["Age", "RestingBP", "Cholesterol", "FastingBS", "MaxHR", "Oldpeak"]
@@ -114,11 +116,9 @@ class Predictor:
 
         Returns dict of feature_name -> shap_value, or None if SHAP is unavailable.
         """
-        self._load()
-        try:
-            import shap
-        except Exception:
+        if not HAS_SHAP:
             return None
+        self._load()
         try:
             import pandas as pd
             df = pd.DataFrame([features.to_dataframe_row()], columns=ALL_COLS)
@@ -126,7 +126,7 @@ class Predictor:
             Xt = pre.transform(df)
             names = pre.get_feature_names_out().tolist()
             inner = self._pipeline.named_steps["calibrated"].calibrated_classifiers_[0].estimator
-            explainer = shap.TreeExplainer(inner) if hasattr(inner, "estimators_") else shap.Explainer(inner)
+            explainer = make_explainer(inner, Xt)
             sv = explainer(Xt)
             values = sv.values[0] if hasattr(sv, "values") else sv[0].values
             return {n: float(v) for n, v in zip(names, values, strict=False)}

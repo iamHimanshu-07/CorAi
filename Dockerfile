@@ -72,5 +72,5 @@ CMD ["sh", "-c", "\
     echo '[entrypoint] Running init-db ...'; \
     flask --app wsgi:app init-db; \
     echo '[entrypoint] Starting gunicorn on port $PORT'; \
-    exec gunicorn -w 2 -b 0.0.0.0:$PORT wsgi:app; \
+    exec gunicorn -w 1 -b 0.0.0.0:$PORT --timeout 120 wsgi:app; \
 "]

@@ -10,8 +10,8 @@ services:
   - type: web
     name: corai
     runtime: docker
-    plan: starter                       # $7/mo — 512 MB RAM, always-on
-    region: oregon                      # closest free region; change if you prefer
+    plan: free                           # free tier: 512 MB RAM, spin-down after 15 min
+    region: oregon                       # most reliably available free region
     branch: main
     dockerfilePath: ./Dockerfile
     dockerContext: .
@@ -39,19 +39,18 @@ services:
         sync: false                      # set manually in Render dashboard
       - key: LLM_API_KEY
         sync: false
-      # --- Bootstrap admin (optional override) -------------------------------
+      # --- Bootstrap admin ---------------------------------------------------
       - key: BOOTSTRAP_DOCTOR_USERNAME
         value: doctor
       - key: BOOTSTRAP_DOCTOR_PASSWORD
-        generateValue: true              # auto-generated; override if you want
+        value: "change-me-after-first-login"
       - key: BOOTSTRAP_DOCTOR_EMAIL
         value: doctor@corai.local
       - key: BOOTSTRAP_DOCTOR_AREA
         value: India
 
-    # Persist /data across deploys. Render disks are billed $0.25/GB/month.
-    # 2 GB is enough for the model + SQLite + caches for a small demo.
+    # Free-tier disk caps at 1 GB. Enough for model + SQLite + RAG + HF cache.
     disk:
       name: corai-data
       mountPath: /data
-      sizeGB: 2
+      sizeGB: 1

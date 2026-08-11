@@ -1,17 +1,14 @@
 # ============================================================================
-# Render Blueprint — declarative IaC for CorAi.
-#
-# Deploy: render.com → New → Blueprint → point at this repo → apply.
-# Render reads this file and creates the services + disk below.
-#
-# Docs: https://render.com/docs/blueprint-spec
+# CorAi — Render Free Blueprint.
+# Cost: $0/month. No card required. Free tier: 512 MB RAM, 1 GB disk.
+# Service spins down after 15 min idle; first request after idle takes 30-60s.
 # ============================================================================
 services:
   - type: web
     name: corai
     runtime: docker
-    plan: free                           # free tier: 512 MB RAM, spin-down after 15 min
-    region: oregon                       # most reliably available free region
+    plan: free                          # free tier: 512 MB RAM, spin-down after 15 min
+    region: oregon                      # most reliably available free region
     branch: main
     dockerfilePath: ./Dockerfile
     dockerContext: .
@@ -43,13 +40,13 @@ services:
       - key: BOOTSTRAP_DOCTOR_USERNAME
         value: doctor
       - key: BOOTSTRAP_DOCTOR_PASSWORD
-        value: "change-me-after-first-login"
+        value: "change-me-after-first-login"   # override in Render dashboard after first deploy
       - key: BOOTSTRAP_DOCTOR_EMAIL
         value: doctor@corai.local
       - key: BOOTSTRAP_DOCTOR_AREA
         value: India
 
-    # Free-tier disk caps at 1 GB. Enough for model + SQLite + RAG + HF cache.
+    # Free-tier disks cap at 1 GB. Enough for model + SQLite + RAG + HF cache.
     disk:
       name: corai-data
       mountPath: /data

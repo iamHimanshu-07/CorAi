@@ -34,8 +34,6 @@ services:
       # --- RAG chatbot (optional — leave blank to disable) ------------------
       - key: GOOGLE_API_KEY
         sync: false                      # set manually in Render dashboard
-      - key: LLM_API_KEY
-        sync: false
       # --- Bootstrap admin ---------------------------------------------------
       - key: BOOTSTRAP_DOCTOR_USERNAME
         value: doctor

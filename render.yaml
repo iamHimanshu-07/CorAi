@@ -24,13 +24,13 @@ services:
         value: "1"                       # cookies over HTTPS only
       # --- Persistent data (Render disk mounted at /data) --------------------
       - key: DATABASE_URL
-        value: sqlite:////data/corai.db
+        value: sqlite:////app/instance/corai.db
       - key: MODEL_PATH
-        value: /data/models/corai-1.0.0.pkl
+        value: /app/models/corai-1.0.0.pkl
       - key: CorAi_RAG_INDEX
-        value: /data/.rag_cache/corai_index
+        value: /app/.rag_cache/corai_index
       - key: CorAi_HF_CACHE
-        value: /data/.hf_cache
+        value: /app/.hf_cache
       # --- RAG chatbot (optional — leave blank to disable) ------------------
       - key: GOOGLE_API_KEY
         sync: false                      # set manually in Render dashboard
@@ -45,9 +45,3 @@ services:
         value: doctor@corai.local
       - key: BOOTSTRAP_DOCTOR_AREA
         value: India
-
-    # Free-tier disks cap at 1 GB. Enough for model + SQLite + RAG + HF cache.
-    disk:
-      name: corai-data
-      mountPath: /data
-      sizeGB: 1

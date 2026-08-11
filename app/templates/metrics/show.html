@@ -1,122 +1,179 @@
 {% extends "base.html" %}
 {% import "_charts.html" as charts %}
 {% import "_macros.html" as m %}
-{% block title %}Model metrics · HDPS{% endblock %}
-{% block content %}
-<header class="page-header">
-  <div>
-    <h1>{{ report.best_model.name }} <span class="muted" style="font-size:18px; font-weight:400;">· model report</span></h1>
-    <p class="muted">Version {{ report.model_version | default('1.0.0') }} · trained {{ report.trained_at[:10] }} · {{ report.dataset.rows }} rows · {{ report.dataset.features | length }} features.</p>
-  </div>
-</header>
+{% block title %}Model Evaluation & Performance Metrics · CorAi{% endblock %}
 
+{% block content %}
 {% set best = report.best_model %}
 {% set models = report.models %}
 
-<section class="kpi-row">
-  {{ charts.kpi_tile("Best CV ROC-AUC", '%0.4f' % best.cv_roc_auc_mean, '± ' ~ '%0.4f' % best.cv_roc_auc_std, color="var(--primary)") }}
-  {{ charts.kpi_tile("Positive rate", '%0.1f' % (report.dataset.positive_rate * 100) ~ '%', 'class balance', color="var(--warning)") }}
-  {{ charts.kpi_tile("Selected by", '5-fold CV', best.name, color="var(--text)") }}
-</section>
-
-<section class="panel">
-  <h2>Per-model ROC-AUC</h2>
-  {% set chart_rows = [] %}
-  {% for mdl in models %}
-    {% set chart_rows = chart_rows + [{
-      'label': mdl.name,
-      'value': mdl.cv_roc_auc_mean,
-      'color': 'var(--primary)' if mdl.name == best.name else 'var(--muted)'
-    }] %}
-  {% endfor %}
-  {{ charts.bar_chart(chart_rows) }}
-</section>
-
-<section class="panel">
-  <h2>Per-model detail</h2>
-  <div class="table-wrap">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Model</th>
-        <th class="num">Accuracy</th>
-        <th class="num">Precision</th>
-        <th class="num">Recall</th>
-        <th class="num">F1</th>
-        <th class="num">ROC-AUC</th>
-        <th class="num">Brier</th>
-        <th class="num">CV ROC-AUC</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for mdl in models %}
-        <tr {% if mdl.name == best.name %}class="best-row"{% endif %}>
-          <td>
-            <strong>{{ mdl.name }}</strong>
-            {% if mdl.name == best.name %}{{ m.pill('best', kind='best') }}{% endif %}
-          </td>
-          <td class="num">{{ '%0.3f' % mdl.metrics.accuracy }}</td>
-          <td class="num">{{ '%0.3f' % mdl.metrics.precision }}</td>
-          <td class="num">{{ '%0.3f' % mdl.metrics.recall }}</td>
-          <td class="num">{{ '%0.3f' % mdl.metrics.f1 }}</td>
-          <td class="num">{{ '%0.3f' % mdl.metrics.roc_auc }}</td>
-          <td class="num">{{ '%0.4f' % mdl.metrics.brier }}</td>
-          <td class="num">{{ '%0.4f' % mdl.cv_roc_auc_mean }} ± {{ '%0.4f' % mdl.cv_roc_auc_std }}</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div style="margin: 2rem 0;">
+  <!-- Header Banner -->
+  <div style="background: #ffffff; border-radius: 12px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 2rem;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+        <span style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #2563eb; background: #eff6ff; padding: 0.25rem 0.75rem; border-radius: 50px;">Best Classifier</span>
+        <span style="font-size: 0.85rem; color: #64748b;">v{{ report.model_version | default('1.0.0') }}</span>
+      </div>
+      <h1 style="color: #1e3a8a; font-size: 2.2rem; font-weight: 800; margin: 0; font-family: 'Inter', system-ui, sans-serif;">{{ best.name }} Performance Report</h1>
+      <p style="color: #64748b; margin: 0.4rem 0 0 0; font-size: 0.95rem;">Trained on {{ report.trained_at[:10] }} using {{ report.dataset.rows }} patient records and {{ report.dataset.features | length }} clinical features.</p>
+    </div>
+    <div style="text-align: right; background: #f8fafc; padding: 1rem 1.5rem; border-radius: 8px; border: 1px solid #e2e8f0;">
+      <span style="font-size: 0.8rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; display: block;">CV ROC-AUC Score</span>
+      <span style="font-size: 2rem; font-weight: 800; color: #2563eb; font-family: var(--font-num);">{{ '%0.4f' % best.cv_roc_auc_mean }}</span>
+      <span style="font-size: 0.8rem; color: #94a3b8; display: block;">± {{ '%0.4f' % best.cv_roc_auc_std }}</span>
+    </div>
   </div>
-</section>
 
-<section class="panel">
-  <h2>Diagnostics</h2>
-  <div class="chart-grid">
+  <!-- Key Metric Summary Cards -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+    <div style="background: #ffffff; border-radius: 10px; padding: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+      <span style="font-size: 0.85rem; font-weight: 600; color: #64748b; display: block; margin-bottom: 0.3rem;">ROC-AUC Score</span>
+      <span style="font-size: 1.8rem; font-weight: 700; color: #1e3a8a; font-family: var(--font-num);">{{ '%0.3f' % best.metrics.roc_auc }}</span>
+      <div style="height: 4px; background: #e2e8f0; border-radius: 2px; margin-top: 0.8rem; overflow: hidden;">
+        <div style="width: {{ (best.metrics.roc_auc * 100)|int }}%; height: 100%; background: #2563eb;"></div>
+      </div>
+    </div>
+
+    <div style="background: #ffffff; border-radius: 10px; padding: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+      <span style="font-size: 0.85rem; font-weight: 600; color: #64748b; display: block; margin-bottom: 0.3rem;">F1 Score</span>
+      <span style="font-size: 1.8rem; font-weight: 700; color: #1e3a8a; font-family: var(--font-num);">{{ '%0.3f' % best.metrics.f1 }}</span>
+      <div style="height: 4px; background: #e2e8f0; border-radius: 2px; margin-top: 0.8rem; overflow: hidden;">
+        <div style="width: {{ (best.metrics.f1 * 100)|int }}%; height: 100%; background: #16a34a;"></div>
+      </div>
+    </div>
+
+    <div style="background: #ffffff; border-radius: 10px; padding: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+      <span style="font-size: 0.85rem; font-weight: 600; color: #64748b; display: block; margin-bottom: 0.3rem;">Precision / Recall</span>
+      <span style="font-size: 1.8rem; font-weight: 700; color: #1e3a8a; font-family: var(--font-num);">{{ '%0.2f' % best.metrics.precision }} / {{ '%0.2f' % best.metrics.recall }}</span>
+      <div style="height: 4px; background: #e2e8f0; border-radius: 2px; margin-top: 0.8rem; overflow: hidden;">
+        <div style="width: {{ (best.metrics.precision * 100)|int }}%; height: 100%; background: #0284c7;"></div>
+      </div>
+    </div>
+
+    <div style="background: #ffffff; border-radius: 10px; padding: 1.5rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+      <span style="font-size: 0.85rem; font-weight: 600; color: #64748b; display: block; margin-bottom: 0.3rem;">Positive Prevalence</span>
+      <span style="font-size: 1.8rem; font-weight: 700; color: #1e3a8a; font-family: var(--font-num);">{{ '%0.1f' % (report.dataset.positive_rate * 100) }}%</span>
+      <div style="height: 4px; background: #e2e8f0; border-radius: 2px; margin-top: 0.8rem; overflow: hidden;">
+        <div style="width: {{ (report.dataset.positive_rate * 100)|int }}%; height: 100%; background: #d97706;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROC-AUC Comparison Chart Card -->
+  <div style="background: #ffffff; border-radius: 12px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; margin-bottom: 2rem;">
+    <h2 style="color: #1e3a8a; font-size: 1.4rem; font-weight: 700; margin-top: 0; margin-bottom: 1.2rem; font-family: 'Inter', system-ui, sans-serif;">Cross-Validation ROC-AUC Comparison</h2>
+    {% set chart_rows = [] %}
     {% for mdl in models %}
-      <article class="chart-card">
-        <header class="chart-card-header">
-          <h3>{{ mdl.name }}</h3>
-          {% if mdl.name == best.name %}{{ m.pill('best', kind='best') }}{% endif %}
-        </header>
-        <div class="img-pair">
-          <a href="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_roc.png') }}" target="_blank" rel="noopener">
-            <img src="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_roc.png') }}" alt="ROC curve for {{ mdl.name }}" loading="lazy">
-            <span class="img-cap">ROC</span>
-          </a>
-          <a href="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_pr.png') }}" target="_blank" rel="noopener">
-            <img src="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_pr.png') }}" alt="PR curve for {{ mdl.name }}" loading="lazy">
-            <span class="img-cap">PR</span>
-          </a>
-        </div>
-        <div class="img-pair">
-          <a href="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_confusion_matrix.png') }}" target="_blank" rel="noopener">
-            <img src="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_confusion_matrix.png') }}" alt="Confusion matrix for {{ mdl.name }}" loading="lazy">
-            <span class="img-cap">Confusion</span>
-          </a>
-          <a href="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_calibration.png') }}" target="_blank" rel="noopener">
-            <img src="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_calibration.png') }}" alt="Calibration for {{ mdl.name }}" loading="lazy">
-            <span class="img-cap">Calibration</span>
-          </a>
-        </div>
-      </article>
+      {% set chart_rows = chart_rows + [{
+        'label': mdl.name,
+        'value': mdl.cv_roc_auc_mean,
+        'color': '#2563eb' if mdl.name == best.name else '#94a3b8'
+      }] %}
     {% endfor %}
+    {{ charts.bar_chart(chart_rows) }}
   </div>
-</section>
 
-<section class="panel">
-  <h2>Dataset</h2>
-  <dl class="kv">
-    <dt>Path</dt><dd>{{ report.dataset.path }}</dd>
-    <dt>Rows</dt><dd>{{ report.dataset.rows }}</dd>
-    <dt>Features</dt><dd>{{ report.dataset.features | join(', ') }}</dd>
-    <dt>Target</dt><dd>{{ report.dataset.target }}</dd>
-    <dt>Positive rate</dt><dd>{{ '%0.1f' % (report.dataset.positive_rate * 100) }}%</dd>
-    <dt>Tool versions</dt>
-    <dd>
-      sklearn {{ report.tools.sklearn }} · numpy {{ report.tools.numpy }} · pandas {{ report.tools.pandas }}
-      {% if report.tools.xgboost %} · xgboost {{ report.tools.xgboost }}{% endif %}
-      {% if report.tools.lightgbm %} · lightgbm {{ report.tools.lightgbm }}{% endif %}
-    </dd>
-  </dl>
-</section>
+  <!-- Detailed Metric Table -->
+  <div style="background: #ffffff; border-radius: 12px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; margin-bottom: 2rem;">
+    <h2 style="color: #1e3a8a; font-size: 1.4rem; font-weight: 700; margin-top: 0; margin-bottom: 1.2rem; font-family: 'Inter', system-ui, sans-serif;">Model Benchmark Breakdown</h2>
+    <div style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">
+        <thead>
+          <tr style="border-bottom: 2px solid #e2e8f0; color: #475569; font-weight: 600;">
+            <th style="padding: 0.8rem 1rem;">Model Name</th>
+            <th style="padding: 0.8rem 1rem; text-align: right;">Accuracy</th>
+            <th style="padding: 0.8rem 1rem; text-align: right;">Precision</th>
+            <th style="padding: 0.8rem 1rem; text-align: right;">Recall</th>
+            <th style="padding: 0.8rem 1rem; text-align: right;">F1 Score</th>
+            <th style="padding: 0.8rem 1rem; text-align: right;">ROC-AUC</th>
+            <th style="padding: 0.8rem 1rem; text-align: right;">Brier Score</th>
+            <th style="padding: 0.8rem 1rem; text-align: right;">5-Fold CV ROC-AUC</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for mdl in models %}
+            <tr style="border-bottom: 1px solid #f1f5f9; {% if mdl.name == best.name %}background: #eff6ff; font-weight: 600;{% endif %}">
+              <td style="padding: 1rem;">
+                <span style="color: #0f172a;">{{ mdl.name }}</span>
+                {% if mdl.name == best.name %}
+                  <span style="display: inline-block; margin-left: 0.5rem; background: #2563eb; color: white; font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 600;">Selected</span>
+                {% endif %}
+              </td>
+              <td style="padding: 1rem; text-align: right; font-family: var(--font-num);">{{ '%0.3f' % mdl.metrics.accuracy }}</td>
+              <td style="padding: 1rem; text-align: right; font-family: var(--font-num);">{{ '%0.3f' % mdl.metrics.precision }}</td>
+              <td style="padding: 1rem; text-align: right; font-family: var(--font-num);">{{ '%0.3f' % mdl.metrics.recall }}</td>
+              <td style="padding: 1rem; text-align: right; font-family: var(--font-num);">{{ '%0.3f' % mdl.metrics.f1 }}</td>
+              <td style="padding: 1rem; text-align: right; font-family: var(--font-num);">{{ '%0.3f' % mdl.metrics.roc_auc }}</td>
+              <td style="padding: 1rem; text-align: right; font-family: var(--font-num);">{{ '%0.4f' % mdl.metrics.brier }}</td>
+              <td style="padding: 1rem; text-align: right; font-family: var(--font-num); color: #2563eb;">{{ '%0.4f' % mdl.cv_roc_auc_mean }} ± {{ '%0.4f' % mdl.cv_roc_auc_std }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Diagnostic Plots Grid -->
+  <div style="background: #ffffff; border-radius: 12px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; margin-bottom: 2rem;">
+    <h2 style="color: #1e3a8a; font-size: 1.4rem; font-weight: 700; margin-top: 0; margin-bottom: 1.5rem; font-family: 'Inter', system-ui, sans-serif;">Diagnostic Curves & Confusion Matrices</h2>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem;">
+      {% for mdl in models %}
+        <div style="border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.2rem; background: #f8fafc;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="margin: 0; color: #1e3a8a; font-size: 1.1rem; font-weight: 700;">{{ mdl.name }}</h3>
+            {% if mdl.name == best.name %}
+              <span style="background: #2563eb; color: white; font-size: 0.75rem; padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 600;">Best</span>
+            {% endif %}
+          </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 0.8rem;">
+            <a href="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_roc.png') }}" target="_blank" style="display: block; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; text-align: center; text-decoration: none;">
+              <img src="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_roc.png') }}" alt="ROC curve" style="width: 100%; height: auto; display: block;" loading="lazy">
+              <span style="font-size: 0.75rem; font-weight: 600; color: #475569; padding: 0.3rem; display: block;">ROC Curve</span>
+            </a>
+            <a href="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_pr.png') }}" target="_blank" style="display: block; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; text-align: center; text-decoration: none;">
+              <img src="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_pr.png') }}" alt="PR curve" style="width: 100%; height: auto; display: block;" loading="lazy">
+              <span style="font-size: 0.75rem; font-weight: 600; color: #475569; padding: 0.3rem; display: block;">PR Curve</span>
+            </a>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem;">
+            <a href="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_confusion_matrix.png') }}" target="_blank" style="display: block; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; text-align: center; text-decoration: none;">
+              <img src="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_confusion_matrix.png') }}" alt="Confusion matrix" style="width: 100%; height: auto; display: block;" loading="lazy">
+              <span style="font-size: 0.75rem; font-weight: 600; color: #475569; padding: 0.3rem; display: block;">Confusion Matrix</span>
+            </a>
+            <a href="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_calibration.png') }}" target="_blank" style="display: block; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; text-align: center; text-decoration: none;">
+              <img src="{{ url_for('metrics.artifact', artifact=mdl.name ~ '_calibration.png') }}" alt="Calibration curve" style="width: 100%; height: auto; display: block;" loading="lazy">
+              <span style="font-size: 0.75rem; font-weight: 600; color: #475569; padding: 0.3rem; display: block;">Calibration Curve</span>
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Dataset & Infrastructure Specs -->
+  <div style="background: #ffffff; border-radius: 12px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid #e2e8f0;">
+    <h2 style="color: #1e3a8a; font-size: 1.4rem; font-weight: 700; margin-top: 0; margin-bottom: 1.2rem; font-family: 'Inter', system-ui, sans-serif;">Dataset & Training Infrastructure</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; font-size: 0.95rem;">
+      <div>
+        <span style="font-weight: 600; color: #475569; display: block; margin-bottom: 0.3rem;">Dataset Source Path</span>
+        <code style="background: #f1f5f9; padding: 0.4rem 0.8rem; border-radius: 6px; color: #0f172a; font-size: 0.85rem; display: block; word-break: break-all;">{{ report.dataset.path }}</code>
+      </div>
+      <div>
+        <span style="font-weight: 600; color: #475569; display: block; margin-bottom: 0.3rem;">Training Features</span>
+        <span style="color: #334155;">{{ report.dataset.features | join(', ') }}</span>
+      </div>
+      <div>
+        <span style="font-weight: 600; color: #475569; display: block; margin-bottom: 0.3rem;">Software Dependencies</span>
+        <span style="color: #334155;">scikit-learn {{ report.tools.sklearn }} · numpy {{ report.tools.numpy }} · pandas {{ report.tools.pandas }}
+          {% if report.tools.xgboost %} · xgboost {{ report.tools.xgboost }}{% endif %}
+          {% if report.tools.lightgbm %} · lightgbm {{ report.tools.lightgbm }}{% endif %}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

@@ -61,7 +61,7 @@ class Predictor:
     def __init__(self, model_path: str | Path) -> None:
         self.model_path = Path(model_path)
         self._pipeline = None
-        self._version = self.model_path.stem.replace("hdps-", "")
+        self._version = self.model_path.stem.replace("corai-", "")
 
     @classmethod
     def instance(cls, model_path: str | Path | None = None) -> Predictor:

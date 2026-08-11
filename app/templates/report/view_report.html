@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}Heart Disease Analysis Report - CorAi{% endblock %}
+
+{% block content %}
+<script src="https://cdn.plot.ly/plotly-2.24.1.min.js" charset="utf-8"></script>
+
+<div style="margin: 2rem 0;">
+  <!-- Header block -->
+  <div style="background: #ffffff; border-radius: 12px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 2rem;">
+    <div>
+      <span style="font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #2563eb; background: #eff6ff; padding: 0.25rem 0.75rem; border-radius: 50px;">Analysis Complete</span>
+      <h1 style="color: #1e3a8a; font-size: 2.2rem; font-weight: 800; margin: 0.6rem 0 0.3rem 0; font-family: 'Inter', system-ui, sans-serif;">Heart Disease Prediction Report</h1>
+      <p style="color: #64748b; margin: 0;">Patient: <strong style="color: #334155;">{{ report.patient_name }}</strong> · Uploaded: <span style="font-weight: 500;">{{ report.uploaded_at.strftime('%Y-%m-%d %H:%M') }}</span></p>
+    </div>
+    <div style="display: flex; gap: 1rem;">
+      <a href="{{ url_for('map.view_map', area=report.address) }}" class="btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem; background: #2563eb; color: #ffffff; padding: 0.8rem 1.6rem; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.25);">
+        📍 Find Doctors in {{ report.address }}
+      </a>
+      <a href="{{ url_for('report.download_pdf', report_id=report.id) }}" style="display: inline-flex; align-items: center; gap: 0.5rem; background: #16a34a; color: #ffffff; padding: 0.8rem 1.6rem; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 15px rgba(22, 163, 74, 0.25);">
+        ⬇ Download PDF
+      </a>
+      <a href="{{ url_for('report.upload') }}" style="display: inline-flex; align-items: center; gap: 0.5rem; background: #f1f5f9; color: #475569; padding: 0.8rem 1.6rem; border-radius: 8px; font-weight: 600; text-decoration: none; transition: all 0.2s; border: 1px solid #cbd5e1;">
+        Upload Another
+      </a>
+    </div>
+  </div>
+
+  <!-- Primary analysis grid -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; align-items: start;">
+    <!-- Risk display card -->
+    <div style="background: #ffffff; border-radius: 12px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; text-align: center; height: 100%;">
+      <h2 style="color: #1e3a8a; font-size: 1.4rem; font-weight: 700; margin-top: 0; margin-bottom: 1.5rem; font-family: 'Inter', system-ui, sans-serif; text-align: left;">Cardiovascular Risk Assessment</h2>
+      
+      <!-- Plotly Gauge container -->
+      <div id="risk-gauge" style="width: 100%; height: 250px; margin: 0 auto;"></div>
+
+      <div style="margin-top: 1rem; padding: 1.2rem; border-radius: 8px; background: {% if prediction.risk == 'Low' %}#f0fdf4{% elif prediction.risk == 'Moderate' %}#fffbeb{% else %}#fef2f2{% endif %}; border: 1px solid {% if prediction.risk == 'Low' %}#bbf7d0{% elif prediction.risk == 'Moderate' %}#fde68a{% else %}#fecaca{% endif %};">
+        <h3 style="margin: 0 0 0.3rem 0; font-size: 1.25rem; font-weight: 700; color: {% if prediction.risk == 'Low' %}#15803d{% elif prediction.risk == 'Moderate' %}#b45309{% else %}#b91c1c{% endif %};">
+          {{ prediction.risk }} Risk ({{ "%.1f"|format(prediction.probability) }}%)
+        </h3>
+        <p style="margin: 0; font-size: 0.95rem; line-height: 1.5; color: #475569;">
+          {% if prediction.risk == 'Low' %}
+            Your cardiac metrics are within or close to healthy baseline limits. Maintain a balanced diet, keep active, and schedule regular checkups.
+          {% elif prediction.risk == 'Moderate' %}
+            Elevated cardiovascular risk parameters detected. Consider sharing this report with your physician and reviewing lifestyle habits.
+          {% else %}
+            High risk indicators observed. We strongly advise scheduling a consultation with a cardiologist to review these metrics immediately.
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <!-- Extracted parameters card -->
+    <div style="background: #ffffff; border-radius: 12px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; height: 100%;">
+      <h2 style="color: #1e3a8a; font-size: 1.4rem; font-weight: 700; margin-top: 0; margin-bottom: 1.5rem; font-family: 'Inter', system-ui, sans-serif;">Extracted Patient Metrics</h2>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.5rem;">
+        <div style="padding-bottom: 0.8rem; border-bottom: 1px solid #f1f5f9;">
+          <span style="display: block; font-size: 0.85rem; color: #94a3b8; font-weight: 500;">Patient Name</span>
+          <span style="font-weight: 600; color: #334155;">{{ report.patient_name }}</span>
+        </div>
+        <div style="padding-bottom: 0.8rem; border-bottom: 1px solid #f1f5f9;">
+          <span style="display: block; font-size: 0.85rem; color: #94a3b8; font-weight: 500;">Location / Area</span>
+          <span style="font-weight: 600; color: #334155;">{{ report.address }}</span>
+        </div>
+        <div style="padding-bottom: 0.8rem; border-bottom: 1px solid #f1f5f9;">
+          <span style="display: block; font-size: 0.85rem; color: #94a3b8; font-weight: 500;">Age & Gender</span>
+          <span style="font-weight: 600; color: #334155;">{{ patient.age|int }} Yrs / {% if patient.sex == 'M' %}Male{% else %}Female{% endif %}</span>
+        </div>
+        <div style="padding-bottom: 0.8rem; border-bottom: 1px solid #f1f5f9;">
+          <span style="display: block; font-size: 0.85rem; color: #94a3b8; font-weight: 500;">Cholesterol Level</span>
+          <span style="font-weight: 600; color: #334155; {% if patient.cholesterol > 240 %}color: #ef4444;{% endif %}">{{ patient.cholesterol|int }} mg/dL</span>
+        </div>
+        <div style="padding-bottom: 0.8rem; border-bottom: 1px solid #f1f5f9;">
+          <span style="display: block; font-size: 0.85rem; color: #94a3b8; font-weight: 500;">Resting Blood Pressure</span>
+          <span style="font-weight: 600; color: #334155; {% if patient.restingbp > 140 %}color: #ef4444;{% endif %}">{{ patient.restingbp|int }} mmHg</span>
+        </div>
+        <div style="padding-bottom: 0.8rem; border-bottom: 1px solid #f1f5f9;">
+          <span style="display: block; font-size: 0.85rem; color: #94a3b8; font-weight: 500;">Max Heart Rate</span>
+          <span style="font-weight: 600; color: #334155;">{{ patient.maxhr|int }} bpm</span>
+        </div>
+        <div style="padding-bottom: 0.8rem; border-bottom: 1px solid #f1f5f9;">
+          <span style="display: block; font-size: 0.85rem; color: #94a3b8; font-weight: 500;">Chest Pain Type</span>
+          <span style="font-weight: 600; color: #334155;">{{ patient.cp }}</span>
+        </div>
+        <div style="padding-bottom: 0.8rem; border-bottom: 1px solid #f1f5f9;">
+          <span style="display: block; font-size: 0.85rem; color: #94a3b8; font-weight: 500;">ST Depression (Oldpeak)</span>
+          <span style="font-weight: 600; color: #334155; {% if patient.oldpeak > 1.5 %}color: #ef4444;{% endif %}">{{ patient.oldpeak }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Medical insights & doctor recommendation -->
+  <div style="background: #ffffff; border-radius: 12px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; margin-bottom: 2rem;">
+    <h2 style="color: #1e3a8a; font-size: 1.5rem; font-weight: 700; margin-top: 0; margin-bottom: 1.5rem; font-family: 'Inter', system-ui, sans-serif;">Comparing Your Cholesterol vs. Baseline Ranges</h2>
+    <div id="comparison-bar" style="width: 100%; height: 300px;"></div>
+  </div>
+
+  <div style="display: flex; justify-content: center; gap: 1.5rem; margin-top: 3rem;">
+    <a href="{{ url_for('map.view_map', area=report.address) }}" class="btn-primary" style="display: inline-flex; align-items: center; justify-content: center; gap: 0.8rem; background: #2563eb; color: #ffffff; padding: 1.2rem 2.5rem; border-radius: 8px; font-weight: 700; font-size: 1.1rem; text-decoration: none; transition: all 0.2s; box-shadow: 0 8px 25px rgba(37, 99, 235, 0.3); border: none; cursor: pointer;">
+      📍 Interactive Map: Recommended Doctors in {{ report.address }}
+    </a>
+  </div>
+</div>
+
+<script>
+  // Dynamic Plotly Gauge for Risk Percentage
+  var riskVal = {{ prediction.probability }};
+  var riskColor = '{% if prediction.risk == "Low" %}#22c55e{% elif prediction.risk == "Moderate" %}#eab308{% else %}#ef4444{% endif %}';
+
+  var dataGauge = [
+    {
+      domain: { x: [0, 1], y: [0, 1] },
+      value: riskVal,
+      title: { text: "Cardiac Risk Level (%)", font: { size: 16, color: '#475569', family: 'Inter, sans-serif' } },
+      type: "indicator",
+      mode: "gauge+number",
+      number: { suffix: "%", font: { color: '#1e293b', size: 36, family: 'Inter, sans-serif' } },
+      gauge: {
+        axis: { range: [null, 100], tickwidth: 1, tickcolor: "#94a3b8" },
+        bar: { color: riskColor, thickness: 0.25 },
+        bgcolor: "#f1f5f9",
+        borderwidth: 1,
+        bordercolor: "#e2e8f0",
+        steps: [
+          { range: [0, 30], color: "rgba(34, 197, 94, 0.05)" },
+          { range: [30, 60], color: "rgba(234, 179, 8, 0.05)" },
+          { range: [60, 100], color: "rgba(239, 68, 68, 0.05)" }
+        ]
+      }
+    }
+  ];
+
+  var layoutGauge = {
+    margin: { t: 30, r: 30, l: 30, b: 30 },
+    paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor: "rgba(0,0,0,0)"
+  };
+
+  Plotly.newPlot('risk-gauge', dataGauge, layoutGauge, {responsive: true, displayModeBar: false});
+
+
+  // Cholesterol Comparison Bar
+  var cholVal = {{ patient.cholesterol }};
+  var targetMax = 200; // Desirable cholesterol level
+  var avgDatabase = 244; // From heart disease dataset average
+
+  var trace1 = {
+    x: ['Desirable', 'Database Avg', 'Your Value'],
+    y: [targetMax, avgDatabase, cholVal],
+    type: 'bar',
+    marker: {
+      color: [
+        'rgba(34, 197, 94, 0.8)', // green
+        'rgba(148, 163, 184, 0.8)', // gray
+        cholVal > 240 ? 'rgba(239, 68, 68, 0.8)' : 'rgba(37, 99, 235, 0.8)' // red or blue
+      ],
+      line: {
+        color: [
+          '#16a34a',
+          '#64748b',
+          cholVal > 240 ? '#dc2626' : '#2563eb'
+        ],
+        width: 1.5
+      }
+    }
+  };
+
+  var layoutBar = {
+    yaxis: {
+      title: 'Cholesterol Level (mg/dL)',
+      gridcolor: '#f1f5f9',
+      zerolinecolor: '#e2e8f0'
+    },
+    xaxis: {
+      tickfont: {
+        size: 13,
+        color: '#475569'
+      }
+    },
+    margin: { t: 20, r: 30, l: 50, b: 40 },
+    paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor: "rgba(0,0,0,0)",
+    hovermode: 'closest'
+  };
+
+  Plotly.newPlot('comparison-bar', [trace1], layoutBar, {responsive: true, displayModeBar: false});
+</script>
+{% endblock %}

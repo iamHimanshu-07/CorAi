@@ -1,4 +1,4 @@
-"""HDPS application factory."""
+"""CorAi application factory."""
 
 from __future__ import annotations
 
@@ -32,6 +32,18 @@ def create_app(config_object: str | object = "config.Config") -> Flask:
     login_manager.login_view = "auth.login"
     login_manager.login_message_category = "warning"
 
+    # Configure RAG engine (HeartAI Copilot) with Gemini API key from config
+    try:
+        import rag_engine
+        gemini_key = app.config.get("GEMINI_API_KEY") or app.config.get("GOOGLE_API_KEY")
+        if gemini_key:
+            rag_engine.configure(google_api_key=gemini_key)
+            app.logger.info("RAG engine configured with Gemini API key")
+        else:
+            app.logger.warning("GEMINI_API_KEY not set; HeartAI Copilot will show configuration message")
+    except Exception as exc:  # noqa: BLE001
+        app.logger.warning("RAG engine not available: %s", exc)
+
     # Blueprints
     from .blueprints.admin.routes import bp as admin_bp
     from .blueprints.api.routes import bp as api_bp
@@ -41,6 +53,11 @@ def create_app(config_object: str | object = "config.Config") -> Flask:
     from .blueprints.metrics.routes import bp as metrics_bp
     from .blueprints.patients.routes import bp as patients_bp
     from .blueprints.predict.routes import bp as predict_bp
+    # New feature blueprints
+    from .blueprints.chatbot.routes import bp as chatbot_bp
+    from .blueprints.report.routes import bp as report_bp
+    from .blueprints.map.routes import bp as map_bp
+    from .blueprints.about.routes import bp as about_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix="/auth")
@@ -50,6 +67,11 @@ def create_app(config_object: str | object = "config.Config") -> Flask:
     app.register_blueprint(admin_bp)
     app.register_blueprint(fhir_bp, url_prefix="/fhir")
     app.register_blueprint(metrics_bp)
+    # Register new feature blueprints
+    app.register_blueprint(chatbot_bp)
+    app.register_blueprint(report_bp)
+    app.register_blueprint(map_bp)
+    app.register_blueprint(about_bp)
 
     # Health checks
     from .health import bp as health_bp
@@ -81,6 +103,12 @@ def create_app(config_object: str | object = "config.Config") -> Flask:
         try:
             from .cli import _apply_light_migrations
             _apply_light_migrations()
+        except Exception:
+            pass
+        try:
+            from .seed import seed_default_doctor, seed_doctors
+            seed_default_doctor()
+            seed_doctors()
         except Exception:
             pass
 

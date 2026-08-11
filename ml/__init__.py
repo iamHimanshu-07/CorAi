@@ -1,1 +1,1 @@
-"""HDPS ML pipeline."""
+"""CorAi ML pipeline."""

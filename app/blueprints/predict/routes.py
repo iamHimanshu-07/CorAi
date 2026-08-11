@@ -54,9 +54,6 @@ def run():
             patient = db.session.get(Patient, patient_id)
             if patient is None:
                 flash(f"Patient #{patient_id} not found; prediction saved without patient link.", "warning")
-            else:
-                # If no patient was supplied, also create a one-shot patient row.
-                pass
     if patient is None:
         patient = Patient(
             name=request.form.get("name", "Anonymous"),
@@ -113,10 +110,10 @@ def pdf_report(prediction_id: int):
     from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=LETTER, title="HDPS Prediction Report")
+    doc = SimpleDocTemplate(buffer, pagesize=LETTER, title="CorAi Prediction Report")
     styles = getSampleStyleSheet()
     story = [
-        Paragraph("Heart Disease Prediction System", styles["Title"]),
+        Paragraph("CorAi", styles["Title"]),
         Paragraph("Prediction Report", styles["Heading2"]),
         Spacer(1, 0.2 * inch),
         Paragraph(f"Generated: {datetime.now(UTC).isoformat()}", styles["Normal"]),
@@ -145,5 +142,5 @@ def pdf_report(prediction_id: int):
         buffer,
         mimetype="application/pdf",
         as_attachment=True,
-        download_name=f"hdps-prediction-{pred.id}.pdf",
+        download_name=f"corai-prediction-{pred.id}.pdf",
     )

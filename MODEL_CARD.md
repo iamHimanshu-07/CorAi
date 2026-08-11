@@ -1,4 +1,4 @@
-# Model Card — Heart Disease Prediction System
+# Model Card — CorAi
 
 Following the [Google Model Card template](https://modelcards.withgoogle.com/about).
 
@@ -12,7 +12,7 @@ Following the [Google Model Card template](https://modelcards.withgoogle.com/abo
 - **Calibration**: `CalibratedClassifierCV(method="isotonic", cv=5)`
 - **Class imbalance**: `SMOTE` (training folds only) + `class_weight="balanced"` where supported
 - **Cross-validation**: 5-fold StratifiedKFold
-- **Persisted artifact**: `models/hdps-1.0.0.pkl` (joblib)
+- **Persisted artifact**: `models/corai-1.0.0.pkl` (joblib)
 
 ## Intended use
 

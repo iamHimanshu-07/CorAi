@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Find Doctors near {{ area }} - CorAi{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<div style="margin: 2rem 0;">
+  <!-- Header Card -->
+  <div style="background: #ffffff; border-radius: 12px; padding: 1.5rem 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+    <div>
+      <h1 style="color: #1e3a8a; font-size: 1.8rem; font-weight: 800; margin: 0; font-family: 'Inter', system-ui, sans-serif;">Cardiologist Directory</h1>
+      <p style="color: #64748b; margin: 0.2rem 0 0 0;">Area-wise recommendations based on your profile: <strong style="color: #334155;">{{ area }}</strong></p>
+    </div>
+    <div>
+      <form method="get" action="{{ url_for('map.view_map') }}" style="display: flex; gap: 0.5rem; align-items: center;">
+        <input type="text" name="area" value="{{ area }}" placeholder="Search by city (e.g. Mumbai)" style="padding: 0.6rem 1rem; border-radius: 6px; border: 1px solid #cbd5e1; outline: none; font-size: 0.95rem; width: 220px;">
+        <button type="submit" style="background: #2563eb; color: #ffffff; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+          Search
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Map Layout -->
+  <div style="display: grid; grid-template-columns: 350px 1fr; gap: 1.5rem; height: 600px; background: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.02); overflow: hidden;">
+    <!-- Sidebar List -->
+    <div style="border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; height: 100%;">
+      <div style="background: #f8fafc; padding: 1.2rem 1.5rem; border-bottom: 1px solid #e2e8f0;">
+        <h3 style="margin: 0; color: #0f172a; font-size: 1.1rem; font-weight: 700;" id="doctor-count-header">Recommended Doctors (0)</h3>
+        <span style="font-size: 0.8rem; color: #64748b;">Click on a doctor to locate on map</span>
+      </div>
+      <div id="doctor-list" style="overflow-y: auto; flex: 1; padding: 1rem; display: flex; flex-direction: column; gap: 0.8rem;">
+        <!-- Filled dynamically by JavaScript -->
+        <div style="text-align: center; color: #94a3b8; padding-top: 3rem;">
+          Searching for cardiologists in your region...
+        </div>
+      </div>
+    </div>
+
+    <!-- Map container -->
+    <div id="map" style="width: 100%; height: 100%; z-index: 1;"></div>
+  </div>
+</div>
+
+<script>
+  // Initialize standard Leaflet Map centered on default coordinates
+  var map = L.map('map').setView([19.0760, 72.8777], 11);
+
+  // Load OpenStreetMap tile layer (the user selected OpenStreetMap with free tiles)
+  L.tileLayer('{{ map_tile_url }}', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(map);
+
+  var markers = [];
+
+  // Fetch doctors dynamically from our custom JSON endpoint
+  var areaParam = encodeURIComponent('{{ area }}');
+  fetch(`/api/doctors?area=${areaParam}`)
+    .then(response => response.json())
+    .then(data => {
+      var doctors = data.doctors;
+      var doctorListDiv = document.getElementById('doctor-list');
+      var countHeader = document.getElementById('doctor-count-header');
+      
+      countHeader.textContent = `Recommended Doctors (${doctors.length})`;
+      doctorListDiv.innerHTML = '';
+      
+      if (doctors.length === 0) {
+        doctorListDiv.innerHTML = '<div style="text-align: center; color: #64748b; padding-top: 3rem;">No recommended doctors found in this area.</div>';
+        return;
+      }
+
+      var bounds = [];
+
+      doctors.forEach((doc, idx) => {
+        // Add doctor card in sidebar
+        var card = document.createElement('div');
+        card.style.background = '#ffffff';
+        card.style.border = '1px solid #e2e8f0';
+        card.style.borderRadius = '8px';
+        card.style.padding = '1rem';
+        card.style.cursor = 'pointer';
+        card.style.transition = 'all 0.2s ease-in-out';
+        card.style.boxShadow = '0 2px 5px rgba(0,0,0,0.01)';
+
+        card.innerHTML = `
+          <h4 style="margin: 0 0 0.3rem 0; color: #1e3a8a; font-weight: 700; font-size: 0.95rem;">${doc.name}</h4>
+          <div style="font-size: 0.8rem; font-weight: 600; color: #2563eb; margin-bottom: 0.4rem;">${doc.specialty}</div>
+          <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.2rem;">📍 ${doc.area}</div>
+          <div style="font-size: 0.75rem; color: #475569;">📞 ${doc.phone || 'N/A'}</div>
+          <div style="font-size: 0.75rem; color: #475569;">✉️ ${doc.email || 'N/A'}</div>
+        `;
+
+        // Card hover effects
+        card.addEventListener('mouseenter', () => {
+          card.style.borderColor = '#2563eb';
+          card.style.transform = 'translateY(-2px)';
+          card.style.boxShadow = '0 4px 10px rgba(37,99,235,0.08)';
+        });
+        card.addEventListener('mouseleave', () => {
+          card.style.borderColor = '#e2e8f0';
+          card.style.transform = 'translateY(0)';
+          card.style.boxShadow = '0 2px 5px rgba(0,0,0,0.01)';
+        });
+
+        // Click to center map and open popup
+        card.addEventListener('click', () => {
+          map.setView([doc.lat, doc.lng], 14, { animate: true });
+          markers[idx].openPopup();
+        });
+
+        doctorListDiv.appendChild(card);
+
+        // Add Marker on Leaflet map
+        var marker = L.marker([doc.lat, doc.lng]).addTo(map);
+        marker.bindPopup(`
+          <div style="font-family: 'Inter', sans-serif;">
+            <h4 style="margin: 0 0 0.2rem 0; color: #1e3a8a; font-size: 0.9rem;">${doc.name}</h4>
+            <div style="font-weight: 600; color: #2563eb; font-size: 0.8rem; margin-bottom: 0.4rem;">${doc.specialty}</div>
+            <div style="font-size: 0.75rem; color: #475569;">📞 ${doc.phone || 'N/A'}</div>
+            <div style="font-size: 0.75rem; color: #475569; margin-bottom: 0.4rem;">✉️ ${doc.email || 'N/A'}</div>
+            <a href="tel:${doc.phone}" style="display: block; text-align: center; background: #2563eb; color: white; border-radius: 4px; padding: 0.3rem; text-decoration: none; font-size: 0.75rem; font-weight: 600; margin-top: 0.4rem;">Call Doctor</a>
+          </div>
+        `);
+
+        markers.push(marker);
+        bounds.push([doc.lat, doc.lng]);
+      });
+
+      // Fit map view to encompass all markers if available
+      if (bounds.length > 0) {
+        map.fitBounds(bounds, { padding: [50, 50] });
+      }
+    })
+    .catch(err => {
+      console.error("Error loading doctors API:", err);
+    });
+</script>
+{% endblock %}

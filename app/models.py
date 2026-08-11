@@ -96,3 +96,31 @@ class Prediction(db.Model):
     model_version = db.Column(db.String(32), nullable=False)
     input_features = db.Column(db.JSON, nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC), index=True)
+
+
+class PdfReport(db.Model):
+    __tablename__ = "pdf_reports"
+
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(255), nullable=False)
+    uploaded_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
+    patient_name = db.Column(db.String(120))
+    address = db.Column(db.String(255))
+    parsed_data = db.Column(db.JSON)
+
+    patient_id = db.Column(db.Integer, db.ForeignKey("patients.id"))
+    patient = db.relationship("Patient", backref="pdf_reports")
+
+
+class Doctor(db.Model):
+    __tablename__ = "doctors"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    specialty = db.Column(db.String(120), nullable=False)
+    area = db.Column(db.String(120), nullable=False)
+    lat = db.Column(db.Float, nullable=False)
+    lng = db.Column(db.Float, nullable=False)
+    phone = db.Column(db.String(20))
+    email = db.Column(db.String(120))
+

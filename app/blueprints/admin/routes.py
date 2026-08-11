@@ -56,3 +56,22 @@ def change_role(user_id: int):
     db.session.commit()
     flash(f"User '{user.username}' is now {new_role}.", "success")
     return redirect(url_for("admin.users"))
+
+
+@bp.post("/admin/users/<int:user_id>/delete")
+@_admin_required
+def delete_user(user_id: int):
+    if current_user.id == user_id:
+        flash("You cannot delete your own account while logged in.", "danger")
+        return redirect(url_for("admin.users"))
+    user = db.session.get(User, user_id)
+    if user is None:
+        abort(404)
+    from ...models import Patient
+    Patient.query.filter_by(owner_id=user.id).update({"owner_id": None})
+    Prediction.query.filter_by(user_id=user.id).update({"user_id": None})
+    username = user.username
+    db.session.delete(user)
+    db.session.commit()
+    flash(f"User '{username}' deleted successfully.", "info")
+    return redirect(url_for("admin.users"))

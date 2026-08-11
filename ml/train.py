@@ -1,18 +1,18 @@
 """
-Heart Disease Prediction System - Model Training Pipeline
+CorAi - Model Training Pipeline
 ==========================================================
 
 Trains, calibrates, and evaluates multiple classifiers on the UCI heart-disease
 dataset (heart.csv). Picks the best model by mean 5-fold CV ROC-AUC and writes
-a versioned artifact (models/hdps-<version>.pkl) along with a fitted scaler
+a versioned artifact (models/corai-<version>.pkl) along with a fitted scaler
 and a JSON evaluation report.
 
 Run:
     python -m ml.train --data heart.csv --version 1.0.0
 
 Outputs:
-    models/hdps-<version>.pkl
-    models/hdps-<version>.scaler.pkl
+    models/corai-<version>.pkl
+    models/corai-<version>.scaler.pkl
     ml/evaluation/report.json
     ml/evaluation/<model>_confusion_matrix.png
     ml/evaluation/<model>_roc.png
@@ -74,7 +74,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 # cross-platform safety. We also pin `LOKY_MAX_CPU_COUNT` so joblib/loky's
 # worker auto-detection stops spawning `wmic` (which is gone on Windows 11).
 os.environ.setdefault("LOKY_MAX_CPU_COUNT", str(os.cpu_count() or 4))
-N_JOBS = int(os.getenv("HDPS_N_JOBS", "1"))
+N_JOBS = int(os.getenv("CorAi_N_JOBS", "1"))
 
 # Optional heavy deps — degrade gracefully if absent
 try:
@@ -90,7 +90,7 @@ except Exception:
     HAS_XGBOOST = False
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
-log = logging.getLogger("hdps.train")
+log = logging.getLogger("corai.train")
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 MODELS_DIR = REPO_ROOT / "models"
@@ -309,14 +309,14 @@ def train_pipeline(version: str, data_path: Path) -> dict[str, Any]:
         ("pre", best_pipe.named_steps["pre"]),
         ("calibrated", best_pipe.named_steps["calibrated"]),
     ])
-    model_path = MODELS_DIR / f"hdps-{version}.pkl"
+    model_path = MODELS_DIR / f"corai-{version}.pkl"
     joblib.dump(inference_pipe, model_path)
     log.info(f"Wrote {model_path}")
 
     # Standalone scaler for back-compat / debugging
     from sklearn.pipeline import Pipeline
     scaler_pipe = Pipeline([("pre", best_pipe.named_steps["pre"])])
-    scaler_path = MODELS_DIR / f"hdps-{version}.scaler.pkl"
+    scaler_path = MODELS_DIR / f"corai-{version}.scaler.pkl"
     joblib.dump(scaler_pipe, scaler_path)
     log.info(f"Wrote {scaler_path}")
 
@@ -371,7 +371,7 @@ def train_pipeline(version: str, data_path: Path) -> dict[str, Any]:
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Train & evaluate HDPS model")
+    p = argparse.ArgumentParser(description="Train & evaluate CorAi model")
     p.add_argument("--data", type=Path, default=DATA_FILE_DEFAULT)
     p.add_argument("--version", type=str, default="1.0.0")
     return p.parse_args()

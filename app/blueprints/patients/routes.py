@@ -110,6 +110,9 @@ def delete(patient_id: int):
     patient = db.session.get(Patient, patient_id)
     if patient is None:
         abort(404)
+    from ...models import PdfReport
+    Prediction.query.filter_by(patient_id=patient.id).delete(synchronize_session=False)
+    PdfReport.query.filter_by(patient_id=patient.id).delete(synchronize_session=False)
     db.session.delete(patient)
     db.session.commit()
     flash(f"Patient '{patient.name}' deleted.", "info")

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "_charts.html" as charts %}
 {% import "_macros.html" as m %}
-{% block title %}Heart Disease Prediction System{% endblock %}
+{% block title %}CorAi{% endblock %}
 {% block content %}
 <section class="hero">
   <div class="hero-grid">
@@ -27,14 +27,6 @@
   </div>
 </section>
 
-<section class="kpi-row">
-  {{ m.kpi_block("Total patients", total_patients, "in the registry", accent="var(--text)") }}
-  {{ m.kpi_block("Total predictions", total_predictions, "logged", accent="var(--primary)") }}
-  {{ m.kpi_block("Low risk", risk_counts.Low, "patients", accent="var(--success)") }}
-  {{ m.kpi_block("Moderate risk", risk_counts.Moderate, "patients", accent="var(--warning)") }}
-  {{ m.kpi_block("High risk", risk_counts.High, "patients", accent="var(--danger)") }}
-</section>
-
 <section class="panel">
   <h2>What it does</h2>
   {{ m.step_flow([
@@ -46,46 +38,6 @@
   ]) }}
 </section>
 
-<section class="panel">
-  <h2>Live predictions</h2>
-  <p class="muted" style="margin-top:-8px;">{{ total_predictions }} total · updated whenever a prediction is logged.</p>
-  <div class="donut-wrap">
-    {{ charts.risk_donut(risk_counts) }}
-  </div>
-</section>
-
-<section class="panel">
-  <h2>Doctors &amp; admins</h2>
-  <p class="muted" style="margin-top:-8px;">{{ total_doctors }} doctor{{ '' if total_doctors == 1 else 's' }} and {{ total_admins }} admin{{ '' if total_admins == 1 else 's' }} registered. Area / city is set during sign-up.</p>
-  <div class="grid-2-col" style="margin-top:16px;">
-    {% if doctor_staff %}
-    <div>
-      <h3 style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin:0 0 12px;">Doctors</h3>
-      <dl class="kv">
-        {% for u in doctor_staff[:6] %}
-          <dt>{{ u.username }}</dt>
-          <dd>{{ u.area or '—' }}</dd>
-        {% endfor %}
-      </dl>
-    </div>
-    {% endif %}
-    {% if admin_staff %}
-    <div>
-      <h3 style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin:0 0 12px;">Admins</h3>
-      <dl class="kv">
-        {% for u in admin_staff[:6] %}
-          <dt>{{ u.username }}</dt>
-          <dd>{{ u.area or '—' }}</dd>
-        {% endfor %}
-      </dl>
-    </div>
-    {% endif %}
-    {% if not doctor_staff and not admin_staff %}
-    <p class="muted" style="grid-column: 1 / -1;">No doctors or admins yet.</p>
-    {% endif %}
-  </div>
-</section>
-
 {% if metrics %}
 <section class="panel">
   <h2>Model report</h2>
@@ -95,6 +47,8 @@
         <dt>Best model</dt><dd><strong>{{ metrics.best_model.name }}</strong></dd>
         <dt>CV ROC-AUC</dt><dd>{{ '%0.4f' % metrics.best_model.cv_roc_auc_mean }} ± {{ '%0.4f' % metrics.best_model.cv_roc_auc_std }}</dd>
         <dt>Positive rate</dt><dd>{{ '%0.1f' % (metrics.dataset.positive_rate * 100) }}%</dd>
+        <dt>Training rows</dt><dd>{{ metrics.dataset.rows }}</dd>
+        <dt>Trained</dt><dd>{{ metrics.trained_at[:10] }}</dd>
       </dl>
     </div>
     <div>

@@ -1,7 +1,7 @@
 # ML Pipeline
 
-This directory owns the modeling side of the Heart Disease Prediction System
-(HDPS). Everything that produces the artifact served by the Flask app lives
+This directory owns the modeling side of the CorAi
+(CorAi). Everything that produces the artifact served by the Flask app lives
 here.
 
 ## What it does
@@ -24,7 +24,7 @@ here.
 5. Picks the best model by **mean CV ROC-AUC**, not single-split performance.
 6. Generates per-model diagnostic plots (confusion matrix, ROC, PR,
    calibration) and a SHAP summary plot for the winning model.
-7. Persists a versioned inference pipeline at `models/hdps-<version>.pkl`
+7. Persists a versioned inference pipeline at `models/corai-<version>.pkl`
    (preprocessor + calibrated classifier, no SMOTE) plus a matching scaler.
 
 ## Running
@@ -34,8 +34,8 @@ python -m ml.train --data heart.csv --version 1.0.0
 ```
 
 Outputs:
-- `models/hdps-1.0.0.pkl`
-- `models/hdps-1.0.0.scaler.pkl`
+- `models/corai-1.0.0.pkl`
+- `models/corai-1.0.0.scaler.pkl`
 - `ml/evaluation/report.json`
 - `ml/evaluation/<model>_*.png`
 - `ml/evaluation/shap_summary.png`

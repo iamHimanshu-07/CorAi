@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}About Us - CorAi{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 2.5rem auto; font-family: 'Inter', system-ui, -apple-system, sans-serif;">
+
+  <!-- Hero Header -->
+  <div style="background: #ffffff; border-radius: 16px; padding: 3rem 2.5rem; text-align: center; box-shadow: 0 10px 30px rgba(37, 99, 235, 0.05); border: 1px solid #e2e8f0; margin-bottom: 2.5rem;">
+    <div style="width: 70px; height: 70px; background: #eff6ff; color: #2563eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.2rem; font-size: 2.2rem; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.15);">
+      ◬
+    </div>
+    <h1 style="color: #1e3a8a; font-size: 2.4rem; font-weight: 800; margin-bottom: 0.8rem; letter-spacing: -0.02em;">About CorAi</h1>
+    <p style="color: #64748b; font-size: 1.15rem; line-height: 1.6; max-width: 680px; margin: 0 auto;">
+      An AI-driven medical analytics platform designed for early detection of cardiovascular risks, automated report extraction, and area-wise specialist recommendations.
+    </p>
+  </div>
+
+  <!-- Section 1: What This Website Does -->
+  <div style="background: #ffffff; border-radius: 14px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; margin-bottom: 2rem;">
+    <h2 style="color: #1e3a8a; font-size: 1.6rem; font-weight: 700; margin-top: 0; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.6rem;">
+      <span style="color: #2563eb;">🚀</span> What This Platform Does
+    </h2>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1.5rem;">
+      <div style="background: #f8fafc; padding: 1.5rem; border-radius: 10px; border: 1px solid #e2e8f0;">
+        <h3 style="color: #1e293b; font-size: 1.15rem; font-weight: 700; margin-top: 0; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+          📊 Predictive Cardiac Risk Scoring
+        </h3>
+        <p style="color: #475569; font-size: 0.95rem; line-height: 1.6; margin: 0;">
+          Evaluates 11 key medical measurements (Age, Resting Blood Pressure, Cholesterol, Fasting Blood Sugar, Max Heart Rate, ST Depression, Sex, Chest Pain Type, Resting ECG, Exercise Angina, and ST Slope) using calibrated Machine Learning ensembles to output an instant risk score (Low, Moderate, High).
+        </p>
+      </div>
+
+      <div style="background: #f8fafc; padding: 1.5rem; border-radius: 10px; border: 1px solid #e2e8f0;">
+        <h3 style="color: #1e293b; font-size: 1.15rem; font-weight: 700; margin-top: 0; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+          📄 Automated PDF Medical Report Extraction
+        </h3>
+        <p style="color: #475569; font-size: 0.95rem; line-height: 1.6; margin: 0;">
+          Allows patients and doctors to upload PDF health reports. The system automatically extracts patient details, clinical metrics, and location, generating interactive comparison charts with baseline health standards.
+        </p>
+      </div>
+
+      <div style="background: #f8fafc; padding: 1.5rem; border-radius: 10px; border: 1px solid #e2e8f0;">
+        <h3 style="color: #1e293b; font-size: 1.15rem; font-weight: 700; margin-top: 0; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+          📍 Area-Wise Doctor Recommendation Map
+        </h3>
+        <p style="color: #475569; font-size: 0.95rem; line-height: 1.6; margin: 0;">
+          Integrates OpenStreetMap and Leaflet geospatial mapping to locate nearby verified cardiologists based on the patient's area extracted from their medical report.
+        </p>
+      </div>
+
+      <div style="background: #f8fafc; padding: 1.5rem; border-radius: 10px; border: 1px solid #e2e8f0;">
+        <h3 style="color: #1e293b; font-size: 1.15rem; font-weight: 700; margin-top: 0; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+          💬 HeartAI Assistant (AI Copilot)
+        </h3>
+        <p style="color: #475569; font-size: 0.95rem; line-height: 1.6; margin: 0;">
+          Embedded floating chatbot powered by OpenAI LLM architectures. Provides instant answers regarding heart disease prevention, dietary recommendations, exercise habits, and platform navigation.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Technology Stack -->
+  <div style="background: #ffffff; border-radius: 14px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; margin-bottom: 2rem;">
+    <h2 style="color: #1e3a8a; font-size: 1.6rem; font-weight: 700; margin-top: 0; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.6rem;">
+      <span style="color: #2563eb;">🛠️</span> Technology Architecture
+    </h2>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.2rem;">
+      <div style="padding: 1.2rem; border-radius: 8px; background: #eff6ff; border-left: 4px solid #2563eb;">
+        <strong style="color: #1e3a8a; font-size: 1rem; display: block; margin-bottom: 0.3rem;">Machine Learning</strong>
+        <span style="color: #3b82f6; font-size: 0.9rem;">Scikit-Learn · XGBoost · LightGBM · SHAP Explainability · SMOTE Balancing</span>
+      </div>
+
+      <div style="padding: 1.2rem; border-radius: 8px; background: #f0fdf4; border-left: 4px solid #16a34a;">
+        <strong style="color: #14532d; font-size: 1rem; display: block; margin-bottom: 0.3rem;">Web Framework</strong>
+        <span style="color: #15803d; font-size: 0.9rem;">Python 3.14 · Flask 3.0 · SQLAlchemy · SQLite · Gunicorn WSGI</span>
+      </div>
+
+      <div style="padding: 1.2rem; border-radius: 8px; background: #fefce8; border-left: 4px solid #ca8a04;">
+        <strong style="color: #713f12; font-size: 1rem; display: block; margin-bottom: 0.3rem;">Interactive Analytics</strong>
+        <span style="color: #a16207; font-size: 0.9rem;">Plotly.js Gauges & Bar Charts · PDFPlumber Text Extractor</span>
+      </div>
+
+      <div style="padding: 1.2rem; border-radius: 8px; background: #faf5ff; border-left: 4px solid #9333ea;">
+        <strong style="color: #581c87; font-size: 1rem; display: block; margin-bottom: 0.3rem;">Mapping & AI</strong>
+        <span style="color: #7e22ce; font-size: 0.9rem;">OpenStreetMap · Leaflet.js · OpenAI GPT Chat Completions</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: How to Use (User Guide) -->
+  <div style="background: #ffffff; border-radius: 14px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; margin-bottom: 2rem;">
+    <h2 style="color: #1e3a8a; font-size: 1.6rem; font-weight: 700; margin-top: 0; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.6rem;">
+      <span style="color: #2563eb;">📖</span> How to Use the System
+    </h2>
+
+    <div style="display: flex; flex-direction: column; gap: 1.2rem;">
+      <div style="display: flex; gap: 1rem; align-items: flex-start;">
+        <div style="width: 36px; height: 36px; background: #2563eb; color: white; border-radius: 50%; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">1</div>
+        <div>
+          <strong style="color: #0f172a; font-size: 1.05rem; display: block; margin-bottom: 0.2rem;">Upload PDF or Run Manual Prediction</strong>
+          <span style="color: #64748b; font-size: 0.95rem; line-height: 1.5;">Navigate to <strong>Upload Report</strong> to submit a PDF lab result, or click <strong>New Prediction</strong> to manually enter your clinical data.</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 1rem; align-items: flex-start;">
+        <div style="width: 36px; height: 36px; background: #2563eb; color: white; border-radius: 50%; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">2</div>
+        <div>
+          <strong style="color: #0f172a; font-size: 1.05rem; display: block; margin-bottom: 0.2rem;">Review Risk Analysis & Comparative Charts</strong>
+          <span style="color: #64748b; font-size: 0.95rem; line-height: 1.5;">View your calculated probability, risk band, and Plotly charts comparing your cholesterol and blood pressure against standard baseline ranges.</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 1rem; align-items: flex-start;">
+        <div style="width: 36px; height: 36px; background: #2563eb; color: white; border-radius: 50%; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">3</div>
+        <div>
+          <strong style="color: #0f172a; font-size: 1.05rem; display: block; margin-bottom: 0.2rem;">Locate Nearby Cardiologists on Map</strong>
+          <span style="color: #64748b; font-size: 0.95rem; line-height: 1.5;">Click <strong>Find Doctor</strong> or the map recommendation button to view verified specialists near your area with direct phone and email contact details.</span>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 1rem; align-items: flex-start;">
+        <div style="width: 36px; height: 36px; background: #2563eb; color: white; border-radius: 50%; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">4</div>
+        <div>
+          <strong style="color: #0f172a; font-size: 1.05rem; display: block; margin-bottom: 0.2rem;">Chat with HeartAI Copilot</strong>
+          <span style="color: #64748b; font-size: 0.95rem; line-height: 1.5;">Use the floating <strong>Chat with HeartAI</strong> widget in the bottom right to ask any health or platform question at any time.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: World Health Organization Insights -->
+  <div style="background: #ffffff; border-radius: 14px; padding: 2.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; margin-bottom: 2rem;">
+    <h2 style="color: #1e3a8a; font-size: 1.6rem; font-weight: 700; margin-top: 0; margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.6rem;">
+      <span style="color: #2563eb;">🌐</span> World Health Organization (WHO) Knowledge
+    </h2>
+
+    <div style="background: #f8fafc; padding: 1.5rem; border-radius: 10px; border-left: 4px solid #2563eb; margin-bottom: 1.5rem;">
+      <h3 style="color: #1e3a8a; font-size: 1.15rem; font-weight: 700; margin-top: 0; margin-bottom: 0.8rem;">
+        {{ data.title }}
+      </h3>
+      {% for p in data.content %}
+        <p style="color: #334155; font-size: 0.95rem; line-height: 1.6; margin-bottom: 0.8rem;">{{ p }}</p>
+      {% endfor %}
+      <span style="font-size: 0.8rem; color: #64748b;">Source: <a href="{{ data.sourced_from }}" target="_blank" style="color: #2563eb;">{{ data.sourced_from }}</a></span>
+    </div>
+  </div>
+
+  <!-- Action CTA -->
+  <div style="text-align: center; margin: 3rem 0;">
+    <a href="{{ url_for('main.dashboard') }}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 1rem 2.5rem; border-radius: 8px; font-weight: 700; text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.25);">
+      Go to Dashboard →
+    </a>
+  </div>
+
+</div>
+{% endblock %}

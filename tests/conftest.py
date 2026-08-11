@@ -26,11 +26,11 @@ def trained_model_path(tmp_path_factory) -> Path:
         pytest.skip("heart.csv missing; cannot train fixture")
 
     from ml.train import train_pipeline
-    out_dir = tmp_path_factory.mktemp("hdps-models")
+    out_dir = tmp_path_factory.mktemp("corai-models")
     # The model_path is fixed under models/ by train_pipeline; copy it out.
     train_pipeline("1.0.0", heart_csv)
-    src = repo / "models" / "hdps-1.0.0.pkl"
-    dst = out_dir / "hdps-1.0.0.pkl"
+    src = repo / "models" / "corai-1.0.0.pkl"
+    dst = out_dir / "corai-1.0.0.pkl"
     dst.write_bytes(src.read_bytes())
     return dst
 

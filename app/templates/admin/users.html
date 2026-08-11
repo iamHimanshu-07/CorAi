@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% import "_macros.html" as m %}
-{% block title %}Users · Admin · HDPS{% endblock %}
+{% block title %}Users · Admin · CorAi{% endblock %}
 {% block content %}
 <header class="page-header">
   <div>
@@ -20,6 +20,7 @@
       <th>Area</th>
       <th>Created</th>
       <th>Change role</th>
+      <th>Actions</th>
     </tr>
   </thead>
   <tbody>
@@ -40,6 +41,15 @@
           </select>
           <button type="submit" class="btn btn-link">Save</button>
         </form>
+      </td>
+      <td>
+        {% if u.id != current_user.id %}
+          <form method="post" action="{{ url_for('admin.delete_user', user_id=u.id) }}" onsubmit="return confirm('Are you sure you want to delete user {{ u.username }}?');" class="inline-form">
+            <button type="submit" class="btn btn-link danger" style="color: #dc2626; font-weight: 600;">Delete</button>
+          </form>
+        {% else %}
+          <span style="font-size: 0.8rem; color: #94a3b8;">(Current User)</span>
+        {% endif %}
       </td>
     </tr>
   {% endfor %}

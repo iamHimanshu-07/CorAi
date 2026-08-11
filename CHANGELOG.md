@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- Initial release of the Heart Disease Prediction System.
+- Initial release of the CorAi.
 - Calibrated ensemble classifier (LR, RF, XGBoost, LightGBM) on UCI heart-disease
   dataset (918 rows).
 - Flask web app with auth, dashboard, patient CRUD, prediction form,

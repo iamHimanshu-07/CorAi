@@ -33,3 +33,28 @@ structlog==24.4.0
 pytest==8.3.3
 pytest-cov==5.0.0
 ruff==0.7.2
+
+# Additional Features Requirements
+openai
+pdfplumber
+beautifulsoup4
+requests
+plotly
+flask-cors
+
+# RAG chatbot (HeartAI Copilot) — optional but recommended
+# Note: langchain 1.x split text-splitter and the legacy "chains" helpers
+# into separate distributions. Pin both.
+langchain>=1.0.0
+langchain-core>=1.0.0
+langchain-text-splitters>=1.0.0
+langchain-classic>=1.0.0
+langchain-community>=0.4.0
+langchain-google-genai>=2.0.0
+faiss-cpu>=1.8.0
+sentence-transformers>=3.0.0
+google-generativeai>=0.7.0
+
+# FastAPI server (for standalone /api/chat)
+fastapi>=0.110.0
+uvicorn>=0.27.0

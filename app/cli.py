@@ -48,6 +48,7 @@ def _apply_light_migrations() -> None:
     Use this in dev/demo where adding a column shouldn't require a full
     Alembic migration. New columns go in here.
     """
+    db.create_all()
     inspector = inspect(db.engine)
     if "users" in inspector.get_table_names():
         user_cols = {c["name"] for c in inspector.get_columns("users")}

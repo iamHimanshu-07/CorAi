@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest in the Heart Disease Prediction System.
+Thanks for your interest in the CorAi.
 
 ## Development setup
 

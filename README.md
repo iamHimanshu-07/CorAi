@@ -1,4 +1,4 @@
-# 🫀 Heart Disease Prediction System
+# 🫀 CorAi
 
 > Open-source heart-disease risk calculator. Calibrated ensemble. SHAP explanations.
 > Per-prediction audit log. FHIR-friendly API.
@@ -19,7 +19,7 @@
 
 ## What it does
 
-HDPS takes 11 routine clinical measurements, runs them through a calibrated
+CorAi takes 11 routine clinical measurements, runs them through a calibrated
 ensemble classifier trained on the UCI heart-disease dataset, and returns a
 probability (0–100%) plus a Low / Moderate / High band. Every prediction is
 logged with the input features, the model version, and the user that
@@ -37,11 +37,13 @@ triggered it — auditable, not a black box.
 
 ```bash
 git clone <repo>
-cd Heart-Disease-Prediction-System
+cd CorAi
 pip install -r requirements.txt
+$env:LOKY_MAX_CPU_COUNT = "4"  # Replace 4 with your desired core count
 python -m ml.train --data heart.csv --version 1.0.0   # one-time
+$env:PYTHONWARNINGS="ignore"
+$env:GEMINI_API_KEY="<your-gemini-api-key>"
 flask --app wsgi:app init-db                          # one-time
-flask --app wsgi:app create-user --username dr --role doctor  # one-time (or rely on bootstrap)
 flask --app wsgi:app run
 ```
 
@@ -83,7 +85,7 @@ docker compose up --build
 │   ├── evaluation/        # report.json + plots (generated)
 │   └── README.md          # methodology
 ├── models/
-│   └── hdps-1.0.0.pkl     # generated; gitignored
+│   └── corai-1.0.0.pkl     # generated; gitignored
 ├── tests/                 # pytest, in-memory SQLite
 ├── wsgi.py                # gunicorn entrypoint
 ├── Dockerfile
@@ -143,7 +145,7 @@ Validation is strict (Pydantic v2). Bad input → `400 validation_error`.
 | Calibration     | isotonic, 5-fold |
 | Class imbalance | SMOTE (training only) + class_weight='balanced' |
 | Explainability  | SHAP per-prediction summary |
-| Persisted as    | `models/hdps-<version>.pkl` (preprocessor + calibrated classifier) |
+| Persisted as    | `models/corai-<version>.pkl` (preprocessor + calibrated classifier) |
 
 See [MODEL_CARD.md](MODEL_CARD.md) for intended use, ethical considerations,
 and limitations. See [ml/README.md](ml/README.md) for methodology details.
@@ -155,12 +157,12 @@ The eval report (with charts) is regenerated every time you run training:
 | env var                        | default                                | purpose                              |
 |--------------------------------|----------------------------------------|--------------------------------------|
 | `SECRET_KEY`                   | dev-only fallback                      | session signing                      |
-| `DATABASE_URL`                 | `sqlite:///hdps.db`                    | SQLAlchemy URI                       |
-| `MODEL_PATH`                   | `models/hdps-1.0.0.pkl`                | inference artifact                   |
+| `DATABASE_URL`                 | `sqlite:///corai.db`                    | SQLAlchemy URI                       |
+| `MODEL_PATH`                   | `models/corai-1.0.0.pkl`                | inference artifact                   |
 | `MODEL_VERSION`                | `1.0.0`                                | stamped on every audit record        |
 | `RATELIMIT_STORAGE_URI`        | `memory://`                            | swap to `redis://...` in prod        |
 | `BOOTSTRAP_DOCTOR_USERNAME`    | `doctor`                               | seeded on first request if missing   |
-| `BOOTSTRAP_DOCTOR_PASSWORD`    | `hdps2026`                             | **change immediately in prod**       |
+| `BOOTSTRAP_DOCTOR_PASSWORD`    | `corai2026`                             | **change immediately in prod**       |
 | `GEMINI_API_KEY`               | empty                                  | reserved for future use              |
 
 ## License

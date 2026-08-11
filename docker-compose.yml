@@ -1,4 +1,4 @@
-# Local dev compose: spin up hdps with a bind-mounted heart.csv.
+# Local dev compose: spin up corai with a bind-mounted heart.csv.
 services:
   web:
     build: .
@@ -9,9 +9,9 @@ services:
       SECRET_KEY: change-me-in-production
     volumes:
       - ./heart.csv:/app/heart.csv:ro
-      - hdps-models:/app/models
-      - hdps-data:/app/instance
+      - corai-models:/app/models
+      - corai-data:/app/instance
 
 volumes:
-  hdps-models:
-  hdps-data:
+  corai-models:
+  corai-data:

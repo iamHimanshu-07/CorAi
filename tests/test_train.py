@@ -29,6 +29,6 @@ def test_train_pipeline_end_to_end(tmp_path):
     assert report["best_model"]["cv_roc_auc_mean"] > 0.7
 
     # Artifacts written under repo / models / ml/evaluation
-    assert (repo / "models" / "hdps-test.pkl").exists()
-    assert (repo / "models" / "hdps-test.scaler.pkl").exists()
+    assert (repo / "models" / "corai-test.pkl").exists()
+    assert (repo / "models" / "corai-test.scaler.pkl").exists()
     assert (repo / "ml" / "evaluation" / "report.json").exists()

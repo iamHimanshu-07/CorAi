@@ -14,12 +14,12 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-me")
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "DATABASE_URL",
-        f"sqlite:///{BASE_DIR / 'hdps.db'}",
+        f"sqlite:///{BASE_DIR / 'corai.db'}",
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Model
-    MODEL_PATH = os.getenv("MODEL_PATH", str(BASE_DIR / "models" / "hdps-1.0.0.pkl"))
+    MODEL_PATH = os.getenv("MODEL_PATH", str(BASE_DIR / "models" / "corai-1.0.0.pkl"))
     MODEL_VERSION = os.getenv("MODEL_VERSION", "1.0.0")
 
     # Sessions
@@ -37,11 +37,22 @@ class Config:
 
     # Gemini (reserved for future use; not consumed by 1.0.0)
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+    # LLM (OpenAI) API key for chatbot
+    LLM_API_KEY = os.getenv("LLM_API_KEY", "")
+    # Map tile URL (Leaflet with OpenStreetMap free tiles)
+    MAP_TILE_URL = os.getenv("MAP_TILE_URL", "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")
+    # PDF upload settings
+    PDF_MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MiB max upload size
+    ALLOWED_EXTENSIONS = {"pdf"}
+    # About Us source URL (e.g., WHO health page)
+    ABOUT_US_SOURCE_URL = os.getenv("ABOUT_US_SOURCE_URL", "https://www.who.int/news-room")
 
     # Bootstrap admin (seeded on first request if missing)
     BOOTSTRAP_DOCTOR_USERNAME = os.getenv("BOOTSTRAP_DOCTOR_USERNAME", "doctor")
-    BOOTSTRAP_DOCTOR_PASSWORD = os.getenv("BOOTSTRAP_DOCTOR_PASSWORD", "hdps2026")
-    BOOTSTRAP_DOCTOR_EMAIL = os.getenv("BOOTSTRAP_DOCTOR_EMAIL", "doctor@hdps.local")
+    BOOTSTRAP_DOCTOR_PASSWORD = os.getenv("BOOTSTRAP_DOCTOR_PASSWORD", "corai2026")
+    BOOTSTRAP_DOCTOR_EMAIL = os.getenv("BOOTSTRAP_DOCTOR_EMAIL", "doctor@corai.local")
+
+
 
 
 class TestConfig(Config):

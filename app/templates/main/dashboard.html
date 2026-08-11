@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "_charts.html" as charts %}
 {% import "_macros.html" as m %}
-{% block title %}Dashboard · HDPS{% endblock %}
+{% block title %}Dashboard · CorAi{% endblock %}
 {% block content %}
 
 {# ========== Role banner ========== #}
@@ -113,17 +113,7 @@
     {% endif %}
   </section>
 
-  {% if metrics %}
-    <section class="panel" style="margin-top:24px;">
-      <h2>About the model</h2>
-      <dl class="kv">
-        <dt>Best model</dt><dd><strong>{{ metrics.best_model.name }}</strong></dd>
-        <dt>CV ROC-AUC</dt><dd>{{ '%0.4f' % metrics.best_model.cv_roc_auc_mean }} ± {{ '%0.4f' % metrics.best_model.cv_roc_auc_std }}</dd>
-        <dt>Trained</dt><dd>{{ metrics.trained_at[:10] }}</dd>
-      </dl>
-      <p style="margin-top:16px;"><a class="btn btn-secondary" href="{{ url_for('metrics.show') }}">Model report →</a></p>
-    </section>
-  {% endif %}
+
 
 {# ================================================================== #}
 {# DOCTOR + ADMIN VIEW                                                 #}
@@ -135,35 +125,6 @@
     {{ m.kpi_block("Low risk", risk_counts.Low, "patients", accent="var(--success)") }}
     {{ m.kpi_block("Moderate risk", risk_counts.Moderate, "patients", accent="var(--warning)") }}
     {{ m.kpi_block("High risk", risk_counts.High, "patients", accent="var(--danger)") }}
-  </section>
-
-  <section class="grid-2-col">
-    <div class="panel">
-      <h2>Risk distribution</h2>
-      <div class="donut-wrap">
-        {{ charts.risk_donut(risk_counts) }}
-      </div>
-    </div>
-
-    <div class="panel">
-      <h2>Model info</h2>
-      {% if metrics %}
-        <dl class="kv">
-          <dt>Best model</dt>
-          <dd><strong>{{ metrics.best_model.name }}</strong></dd>
-          <dt>CV ROC-AUC</dt>
-          <dd>{{ '%0.4f' % metrics.best_model.cv_roc_auc_mean }} ± {{ '%0.4f' % metrics.best_model.cv_roc_auc_std }}</dd>
-          <dt>Training rows</dt>
-          <dd>{{ metrics.dataset.rows }}</dd>
-          <dt>Trained</dt>
-          <dd>{{ metrics.trained_at[:10] }}</dd>
-        </dl>
-        <p style="margin-top:24px;"><a class="btn btn-secondary" href="{{ url_for('metrics.show') }}">View full report →</a></p>
-      {% else %}
-        <p class="muted">No evaluation report yet. Run <code>python -m ml.train --data heart.csv --version 1.0.0</code> to generate one.</p>
-        <p style="margin-top:16px;"><a class="btn btn-secondary" href="{{ url_for('metrics.show') }}">Open metrics →</a></p>
-      {% endif %}
-    </div>
   </section>
 
   <section class="panel">
@@ -266,4 +227,5 @@
     </section>
   {% endif %}
 {% endif %}
+
 {% endblock %}

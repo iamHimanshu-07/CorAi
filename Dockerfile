@@ -63,14 +63,14 @@ EXPOSE 5000
 # ============================================================================
 CMD ["sh", "-c", "\
     set -e; \
-    if [ ! -f \"$$MODEL_PATH\" ]; then \
-        echo '[entrypoint] Training model artifact at $$MODEL_PATH ...'; \
-        LOKY_MAX_CPU_COUNT=$$LOKY_MAX_CPU_COUNT python -m ml.train --data heart.csv --version 1.0.0; \
+    if [ ! -f \"$MODEL_PATH\" ]; then \
+        echo '[entrypoint] Training model artifact at $MODEL_PATH ...'; \
+        LOKY_MAX_CPU_COUNT=2 python -m ml.train --data heart.csv --version 1.0.0; \
     else \
-        echo '[entrypoint] Model artifact already present at $$MODEL_PATH — skipping training.'; \
+        echo '[entrypoint] Model artifact already present at $MODEL_PATH — skipping training.'; \
     fi; \
     echo '[entrypoint] Running init-db ...'; \
     flask --app wsgi:app init-db; \
-    echo '[entrypoint] Starting gunicorn on port $$PORT'; \
-    exec gunicorn -w 2 -b 0.0.0.0:$$PORT wsgi:app; \
+    echo '[entrypoint] Starting gunicorn on port $PORT'; \
+    exec gunicorn -w 2 -b 0.0.0.0:$PORT wsgi:app; \
 "]

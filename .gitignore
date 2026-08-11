@@ -38,11 +38,28 @@ coverage.xml
 .env.local
 *.log
 
-# Generated artifacts
-instance/
-*.db
+# Generated artifacts — DO NOT COMMIT
+corai.db
+corai.db-journal
 *.sqlite
 *.sqlite3
-models/*.pkl
+instance/
 ml/evaluation/*.png
 ml/evaluation/report.json
+
+# Cached RAG index and HuggingFace model cache (regenerated at runtime)
+.rag_cache/
+.hf_cache/
+
+# Persistent volume mount (Render / Railway)
+# /data lives on the attached disk on production hosts; on dev systems
+# it simply doesn't exist.
+# Keep the directory itself in the build by ignoring its contents only:
+/data/*
+!/data/.gitkeep
+
+# Trained model artifacts are NOT in the repo (re-trained on first boot).
+# If you want to ship a pre-trained model, add `models/*.pkl` exceptions
+# here AND commit the .pkl file.
+models/*.pkl
+!models/.gitkeep

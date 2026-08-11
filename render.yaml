@@ -1,0 +1,57 @@
+# ============================================================================
+# Render Blueprint — declarative IaC for CorAi.
+#
+# Deploy: render.com → New → Blueprint → point at this repo → apply.
+# Render reads this file and creates the services + disk below.
+#
+# Docs: https://render.com/docs/blueprint-spec
+# ============================================================================
+services:
+  - type: web
+    name: corai
+    runtime: docker
+    plan: starter                       # $7/mo — 512 MB RAM, always-on
+    region: oregon                      # closest free region; change if you prefer
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      # --- Flask -------------------------------------------------------------
+      - key: FLASK_CONFIG
+        value: config.Config
+      - key: SECRET_KEY
+        generateValue: true              # Render generates + stores this
+      - key: SESSION_COOKIE_SECURE
+        value: "1"                       # cookies over HTTPS only
+      # --- Persistent data (Render disk mounted at /data) --------------------
+      - key: DATABASE_URL
+        value: sqlite:////data/corai.db
+      - key: MODEL_PATH
+        value: /data/models/corai-1.0.0.pkl
+      - key: CorAi_RAG_INDEX
+        value: /data/.rag_cache/corai_index
+      - key: CorAi_HF_CACHE
+        value: /data/.hf_cache
+      # --- RAG chatbot (optional — leave blank to disable) ------------------
+      - key: GOOGLE_API_KEY
+        sync: false                      # set manually in Render dashboard
+      - key: LLM_API_KEY
+        sync: false
+      # --- Bootstrap admin (optional override) -------------------------------
+      - key: BOOTSTRAP_DOCTOR_USERNAME
+        value: doctor
+      - key: BOOTSTRAP_DOCTOR_PASSWORD
+        generateValue: true              # auto-generated; override if you want
+      - key: BOOTSTRAP_DOCTOR_EMAIL
+        value: doctor@corai.local
+      - key: BOOTSTRAP_DOCTOR_AREA
+        value: India
+
+    # Persist /data across deploys. Render disks are billed $0.25/GB/month.
+    # 2 GB is enough for the model + SQLite + caches for a small demo.
+    disk:
+      name: corai-data
+      mountPath: /data
+      sizeGB: 2

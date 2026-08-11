@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from flask import Flask
@@ -35,12 +36,21 @@ def create_app(config_object: str | object = "config.Config") -> Flask:
     # Configure RAG engine (HeartAI Copilot) with Gemini API key from config
     try:
         import rag_engine
-        gemini_key = app.config.get("GEMINI_API_KEY") or app.config.get("GOOGLE_API_KEY")
+        # Prefer GOOGLE_API_KEY (current), fall back to legacy GEMINI_API_KEY.
+        gemini_key = app.config.get("GOOGLE_API_KEY") or app.config.get("GEMINI_API_KEY")
         if gemini_key:
-            rag_engine.configure(google_api_key=gemini_key)
+            # Re-pin the RAG index + HF cache to /data so the FAISS index
+            # survives redeploys when a persistent volume is mounted.
+            rag_engine.configure(
+                google_api_key=gemini_key,
+                index_dir=os.getenv("CorAi_RAG_INDEX", "/data/.rag_cache/corai_index"),
+            )
             app.logger.info("RAG engine configured with Gemini API key")
         else:
-            app.logger.warning("GEMINI_API_KEY not set; HeartAI Copilot will show configuration message")
+            app.logger.warning(
+                "GOOGLE_API_KEY/GEMINI_API_KEY not set; HeartAI Copilot will "
+                "show a configuration message in the chat widget."
+            )
     except Exception as exc:  # noqa: BLE001
         app.logger.warning("RAG engine not available: %s", exc)
 

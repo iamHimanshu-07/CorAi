@@ -192,13 +192,11 @@ All knobs are environment variables (no code changes needed). See
 │   └── corai-1.0.0.pkl    # generated; gitignored
 ├── tests/                 # pytest, in-memory SQLite
 ├── wsgi.py                # gunicorn entrypoint
-├── main.py                # standalone FastAPI chatbot server (optional)
 ├── rag_engine.py          # Gemini + FAISS RAG for HeartAI Copilot
-├── Dockerfile             # production image (used by Render / Railway / Fly)
+├── Dockerfile             # production image (HF Spaces / Render / Railway / Fly)
 ├── docker-compose.yml     # local dev
-├── render.yaml            # Render Blueprint
-├── Procfile               # Render buildpack fallback
-├── runtime.txt            # Python version pin for buildpack path
+├── render.yaml            # Render Blueprint (paid Starter)
+├── runtime.txt            # Python version pin
 ├── pyproject.toml         # ruff config
 ├── requirements.txt       # pinned versions
 ├── MODEL_CARD.md          # intended use, limitations

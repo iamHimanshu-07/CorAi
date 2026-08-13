@@ -146,7 +146,7 @@ flask --app wsgi:app run
 | `/readyz` → `model: missing` | First boot, training still in progress | Wait 2–3 min, refresh |
 | `/readyz` → `model: missing` after deploy | Persistent disk not mounted | Render dashboard → Disks → verify `corai-data` is attached at `/data` |
 | 500 on login | `SECRET_KEY` rotated, sessions invalidated | Restart service |
-| Slow first request after a long idle | Free-plan instance spun down | Upgrade to Starter (always-on) |
+| High memory / OOM killed on first request | `gunicorn -w 2` on the 512 MB Starter plan | The render.yaml uses `-w 1`; bump your Starter plan to a 1 GB+ instance if you need `-w 2` |
 | Chatbot shows "needs an API key" | `GOOGLE_API_KEY` not set | Set it in Render env vars (section 4) |
 | `apt-get install` fails during build | Rare transient registry error | Retry the deploy |
 

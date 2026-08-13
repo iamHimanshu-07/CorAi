@@ -1,3 +1,14 @@
+---
+title: CorAi
+emoji: 🫀
+colorFrom: red
+colorTo: pink
+sdk: docker
+app_port: 7860
+pinned: false
+license: mit
+---
+
 # 🫀 CorAi
 
 > Open-source heart-disease risk calculator. Calibrated ensemble. SHAP explanations.

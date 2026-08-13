@@ -1,5 +1,15 @@
 # Deploying CorAi to Render
 
+> ⚠️ **Heads up:** CorAi's ML/RAG stack (scikit-learn, lightgbm, shap, langchain,
+> faiss-cpu, sentence-transformers) does **not fit on Render's free plan** —
+> 512 MB RAM is too small to build or run it, and free instances can't attach
+> a persistent disk (so the trained model and SQLite DB are wiped on every
+> redeploy). For a **free** deployment, see
+> [`DEPLOY_HF_SPACES.md`](DEPLOY_HF_SPACES.md) (Hugging Face Spaces Docker).
+>
+> The guide below covers the **paid** Render Starter plan ($7.50/mo), which is
+> a clean always-on deploy with a 2 GB persistent disk.
+
 This is the full, copy-paste deployment guide for getting CorAi live on
 [Render](https://render.com). The whole process takes about **10 minutes**
 if you already have a Render account.

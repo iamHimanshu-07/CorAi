@@ -5,6 +5,7 @@
 #   - local dev:  docker compose up --build
 #   - Render:     web service with `runtime: docker` (this file)
 #   - Railway:    builder=Dockerfile
+#   - HF Spaces:  Docker Space (sdk: docker, port 7860)
 # ============================================================================
 ARG PYTHON_VERSION=3.11
 
@@ -21,7 +22,21 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     # Don't start a useless X server inside headless reportlab/matplotlib.
     MPLBACKEND=Agg
 
-WORKDIR /app
+# Hugging Face Spaces runs containers as UID 1000 with username `user`.
+# Create that user up front so we can drop privileges before any pip install
+# or COPY (avoids "Permission denied" on /home/user/.cache/pip).
+# We also create the legacy `corai` user as a fallback alias for Render /
+# Railway deployments that don't enforce UID 1000.
+RUN useradd --create-home --shell /bin/bash --uid 1000 user \
+    && useradd --create-home --shell /bin/bash corai || true \
+    && mkdir -p /home/user/app \
+    && chown -R user:user /home/user
+
+# Default port: 7860 for HF Spaces. Render / Railway set $PORT explicitly,
+# so this default is overridden in production.
+ENV PORT=7860
+
+WORKDIR /home/user/app
 
 # system deps: build-essential for scikit-learn / lightgbm wheels, curl for
 # healthchecks, libgomp1 for lightgbm runtime.
@@ -32,23 +47,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # ---- Python deps (cached separately for better layer reuse) ----
-COPY requirements.txt ./
+COPY --chown=user:user requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # ---- Application source ----
-COPY . .
+COPY --chown=user:user . .
 
-# Persistent data directory. On Render we attach a disk at /data (see render.yaml).
-# Locally this just falls back to the in-image path, which is fine for dev.
+# Persistent data directory. On Render / Railway we attach a disk at /data
+# (see render.yaml / Procfile). Locally and on free HF Spaces (no Storage
+# Bucket) this just falls back to the in-image path, which is fine for dev
+# and the model retrains on every cold start.
 RUN mkdir -p /data/models /data/instance /data/.rag_cache /data/.hf_cache \
-    && chmod -R 0777 /data
+    && chmod -R 0777 /data \
+    && chown -R user:user /data /home/user/app
 
-# Non-root user for the runtime stage.
-RUN useradd --create-home --shell /bin/bash corai \
-    && chown -R corai:corai /app /data
-USER corai
+USER user
 
-EXPOSE 5000
+EXPOSE 7860
 
 # ============================================================================
 # Entrypoint
@@ -56,10 +71,10 @@ EXPOSE 5000
 # On first boot:
 #   1. Train the model artifact if missing (uses heart.csv from the repo).
 #   2. Initialize the SQLite schema + run the additive migrations.
-#   3. Launch gunicorn on $PORT (Render / Railway / Heroku set this).
+#   3. Launch gunicorn on $PORT (Render / Railway / Heroku / HF Spaces set this).
 #
-# Subsequent boots skip steps 1 & 2 because the artifact + DB live on the
-# persistent volume (/data) and are reused.
+# Subsequent boots skip steps 1 & 2 if a persistent volume is mounted at /data
+# and the artifact + DB live there.
 # ============================================================================
 CMD ["sh", "-c", "\
     set -e; \

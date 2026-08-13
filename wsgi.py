@@ -1,7 +1,11 @@
 """WSGI entrypoint for production servers (gunicorn).
 
 Usage:
-    gunicorn -w 2 -b 0.0.0.0:5000 wsgi:app
+    gunicorn -w 2 -b 0.0.0.0:$PORT wsgi:app
+
+The default ``$PORT`` is ``7860`` to match Hugging Face Spaces. Render and
+Railway set ``$PORT`` to their own value at runtime, so they override this
+default. Local dev can still pin ``PORT=5000`` via ``.env``.
 """
 
 import os
@@ -12,4 +16,4 @@ app = create_app(os.getenv("FLASK_CONFIG", "config.Config"))
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")), debug=False)
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "7860")), debug=False)

@@ -14,13 +14,8 @@
 services:
   - type: web
     name: corai
-    runtime: python
+    runtime: docker
     plan: free
-    # If Dockerfile + render.yaml both exist, Render prefers the Dockerfile.
-    # We provide it for clarity over the Python buildpack behaviour, but
-    # you can delete the Dockerfile and remove `dockerfilePath` to fall
-    # back to the buildpack (which auto-runs `pip install -r requirements.txt`
-    # then `gunicorn app:create_app()`).
     dockerfilePath: ./Dockerfile
     dockerContext: .
     autoDeploy: true

@@ -1,0 +1,52 @@
+# Git, caches, local env, IDE settings — don't ship them in the image.
+.git
+.gitignore
+.github
+.gitattributes
+
+# Python caches and virtualenvs
+.venv
+venv
+__pycache__
+**/__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.ruff_cache
+
+# HF / RAG caches (rebuilt on cold start)
+.hf_cache
+.rag_cache
+
+# Local runtime state
+corai.db
+corai.db-journal
+*.sqlite
+*.sqlite3
+instance/uploads
+
+# Built model artifacts (trained inside the container; pull models/*.pkl in
+# only if you've already committed them)
+models/*.pkl
+
+# Editor / OS junk
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Docker meta — never copy the Dockerfile into the build context
+Dockerfile
+.dockerignore
+
+# Docs and deployment helpers — keep them in the repo, but no need in image.
+# (Uncomment if image size ever matters more than context clarity.)
+# *.md
+# LICENSE
+# CHANGELOG.md
+# CODE_OF_CONDUCT.md
+# CONTRIBUTING.md
+# SECURITY.md
+# MODEL_CARD.md
+# DEPLOY_HF_SPACES.md

@@ -16,5 +16,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   PDF reports, JSON API, admin tools, FHIR R4 stub.
 - Per-prediction audit log (model version, user, input features).
 - SHAP-based per-prediction explanations.
-- Docker / docker-compose support.
 - Pytest + ruff CI.

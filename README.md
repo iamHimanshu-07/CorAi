@@ -1,14 +1,3 @@
----
-title: CorAi
-emoji: 🫀
-colorFrom: red
-colorTo: pink
-sdk: docker
-app_port: 7860
-pinned: false
-license: mit
----
-
 # 🫀 CorAi
 
 > Open-source heart-disease risk calculator. Calibrated ensemble. SHAP explanations.
@@ -21,6 +10,7 @@ license: mit
 ![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-ML-orange?style=for-the-badge&logo=scikitlearn)
 ![SQLite](https://img.shields.io/badge/SQLite-Database-003B57?style=for-the-badge&logo=sqlite)
 ![MIT License](https://img.shields.io/badge/License-MIT-success?style=for-the-badge)
+[![Deploy to Render](https://img.shields.io/badge/Deploy-Render-46e3b7?style=for-the-badge&logo=render)](https://render.com/deploy?repo=https://github.com/iamHimanshu-07/CorAi)
 
 </div>
 
@@ -89,60 +79,53 @@ Open <http://127.0.0.1:5000> and sign in with the bootstrap doctor account:
 
 ---
 
-## Deploy to Hugging Face Spaces (free, recommended)
+## Deploy to Render (free, recommended)
 
-The repo ships with an HF Spaces–compatible Dockerfile (multi-stage, ~1.5 GB
-final image, gunicorn + 2 workers). Free tier gets 2 vCPUs, 16 GB RAM.
+The repo ships with a Render Blueprint (`render.yaml`) + Dockerfile that
+provisions everything in one click.
 
-### 1. Create the Space
-1. Go to <https://huggingface.co/new-space>.
-2. **Space name**: `corai`
-3. **SDK**: **Docker**
-4. **Hardware**: CPU basic (free)
-5. **Visibility**: Public
+### 1. Create the service
+1. Sign in at <https://dashboard.render.com/> (free account).
+2. Click **New +** → **Blueprint**.
+3. Pick the GitHub repo `iamHimanshu-07/CorAi`.
+4. Render reads `render.yaml` and shows a single `corai` web service on the
+   **Free** plan.
+5. Click **Apply**. Render builds the Docker image (5–8 min on first build).
 
-### 2. Set environment variables
-Open **Space → Settings → Variables and secrets** and add:
+### 2. Auto-generated secrets
+On the first deploy, Render generates two secrets for you:
+- `SECRET_KEY`
+- `BOOTSTRAP_DOCTOR_PASSWORD`
 
-| Name | Value | Secret? |
-|---|---|---|
-| `SECRET_KEY` | any random 32+ char string | ✅ |
-| `BOOTSTRAP_DOCTOR_PASSWORD` | your own password | ✅ |
-| `GOOGLE_API_KEY` | your Gemini key (optional, enables Copilot) | ✅ |
+You'll see them once under **Environment → Environment Group**, copy and
+save them somewhere safe.
 
-HF Spaces does **not** load `.env` files — environment variables go in the UI.
+### 3. Read the bootstrap password
+Until you set `BOOTSTRAP_DOCTOR_PASSWORD` to something memorable, Render
+randomly generated one for you (see step 2) — get it from the dashboard.
 
-### 3. Push the code
-```bash
-git remote add space https://huggingface.co/spaces/<your-username>/corai
-git push space main
-```
-
-The Space builds in ~5–8 min on first push (lots of `pip install`). Watch
-the **Logs** tab; look for:
-```
-Booting worker with pid: …
-Listening at: http://0.0.0.0:7860
-```
-
-### 4. Persistent storage (recommended)
-Without a disk, the SQLite DB + FAISS index + model artifact are re-built on
-every cold start (the Dockerfile already trains on boot, so it's fine). For
-warm persistence (no rebuild, faster restarts):
-
-1. **Space → Settings → Storage** → create a Storage bucket, mount at `/data`.
-2. The app already detects `/data` and writes the DB, model, and RAG index
-   there when writable (see `app/config.py`).
+### 4. Optional: enable HeartAI Copilot
+1. Get a Gemini API key from <https://aistudio.google.com/apikey>.
+2. In Render: **Environment → Add Environment Variable** →
+   - Key: `GOOGLE_API_KEY`
+   - Value: your key
+3. Click **Save Changes** → Render redeploys.
 
 ### 5. URL
-Your live URL will be `https://<your-username>-corai.hf.space`. Sign in with
-the bootstrap doctor account set above.
+Your live URL will be `https://corai.onrender.com`. Sign in with the
+bootstrap doctor account set above.
 
 ### Known free-tier behaviors
-- **Sleeps after 48 h of no traffic** — first request after sleep takes 30–60 s
-  to wake + retrain + warm FAISS.
-- **No persistent disk by default** — boot retrains from `heart.csv` (≈10 s)
-  and re-seeds the DB; on first boot you'll land on the bootstrap doctor login.
+- **Spins down after 15 min idle** — first request after sleep takes ~30 s
+  to wake + retrain (~10 s) + warm FAISS.
+- **No persistent disk** — boot retrains from `heart.csv` and re-seeds the
+  DB; on first boot you'll land on the bootstrap doctor login.
+- **750 free instance-hours/month** — well within hobby/demo limits.
+
+### Auto-deploy
+A GitHub Actions workflow (`.github/workflows/render-deploy.yml`) pings
+Render on every push to `main` once you add the `RENDER_DEPLOY_HOOK` secret
+(see [Render docs](https://docs.render.com/configure-deploy-hook)).
 
 ---
 
@@ -161,7 +144,7 @@ All knobs are environment variables (no code changes needed). See
 | `GOOGLE_API_KEY` | empty | enable HeartAI Copilot (Gemini + FAISS RAG) |
 | `GEMINI_API_KEY` | empty | legacy alias for `GOOGLE_API_KEY` |
 | `LLM_API_KEY` | empty | OpenAI fallback for the chatbot |
-| `PORT` | `5000` | dev server port |
+| `PORT` | `5000` (dev) / `10000` (Render) | gunicorn bind port |
 
 ---
 
@@ -201,9 +184,11 @@ All knobs are environment variables (no code changes needed). See
 │   ├── evaluation/        # report.json + plots (generated)
 │   └── README.md          # methodology
 ├── models/
-│   └── corai-1.0.0.pkl    # generated; gitignored
+│   └── corai-1.0.0.pkl    # generated at boot; gitignored
 ├── tests/                 # pytest, in-memory SQLite
 ├── rag_engine.py          # Gemini + FAISS RAG for HeartAI Copilot
+├── Dockerfile             # production image (Render / any Docker host)
+├── render.yaml            # Render Blueprint (free plan)
 ├── pyproject.toml         # ruff config
 ├── requirements.txt       # pinned versions
 ├── MODEL_CARD.md          # intended use, limitations

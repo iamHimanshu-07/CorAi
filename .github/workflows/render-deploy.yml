@@ -1,0 +1,26 @@
+name: Deploy to Render
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Don't pile up concurrent deploys if you push several commits in a row.
+concurrency:
+  group: render-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Trigger Render deploy
+        # Render's official action — pings the deploy hook URL stored in
+        # the GitHub secret RENDER_DEPLOY_HOOK. Create the hook URL once at
+        # dashboard.render.com → CorAi service → Settings → Deploy Hook.
+        uses: tsuncc/nafigos-trigger-render-deploy@v2.0
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        with:
+          url: ${{ secrets.RENDER_DEPLOY_HOOK }}

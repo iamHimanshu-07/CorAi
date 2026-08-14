@@ -39,11 +39,11 @@ def create_app(config_object: str | object = "config.Config") -> Flask:
         # Prefer GOOGLE_API_KEY (current), fall back to legacy GEMINI_API_KEY.
         gemini_key = app.config.get("GOOGLE_API_KEY") or app.config.get("GEMINI_API_KEY")
         if gemini_key:
-            # Re-pin the RAG index + HF cache to /data so the FAISS index
-            # survives redeploys when a persistent volume is mounted.
+            # RAG FAISS index lives in the repo-local .rag_cache so it's
+            # recreated on cold starts (free-tier friendly).
             rag_engine.configure(
                 google_api_key=gemini_key,
-                index_dir=os.getenv("CorAi_RAG_INDEX", "/data/.rag_cache/corai_index"),
+                index_dir=os.getenv("CorAi_RAG_INDEX", ".rag_cache/corai_index"),
             )
             app.logger.info("RAG engine configured with Gemini API key")
         else:

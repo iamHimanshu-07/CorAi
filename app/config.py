@@ -1,15 +1,15 @@
 """Configuration classes.
 
-Resolution order for data paths (so the same image runs locally AND on a
-hosted PaaS without code changes):
+Resolution order:
 
-1. Environment variable (e.g. ``DATABASE_URL``, ``MODEL_PATH``). On Render
-   / Railway / Fly / etc. point these at the persistent disk, e.g.
-   ``MODEL_PATH=/data/models/corai-1.0.0.pkl``.
-2. If ``/data`` is writable (always on Render with a disk, always on
-   Railway with a volume), default to ``/data`` for the SQLite DB, model
-   artifact, RAG cache, and HF cache.
-3. Otherwise (local dev, CI, tests) fall back to the repo-root paths.
+1. Environment variable (e.g. ``DATABASE_URL``, ``MODEL_PATH``) — set these
+   in production to override defaults.
+2. Otherwise fall back to repo-local paths (``corai.db``, ``models/``,
+   ``.rag_cache/``, ``.hf_cache/``).
+
+The Dockerfile's boot sequence (`flask init-db` + `python -m ml.train`)
+recreates the SQLite DB and model artifact on every cold start, so a
+transient filesystem (like Render's free tier) is fine.
 """
 
 from __future__ import annotations
@@ -18,12 +18,6 @@ import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-# /data is the conventional mount for a persistent volume on Render
-# (disks) and Railway (volumes). If it exists AND is writable, use it.
-_DATA_DIR = Path(os.getenv("CorAi_DATA_DIR", "/data"))
-_HAS_PERSISTENT = _DATA_DIR.exists() and os.access(_DATA_DIR, os.W_OK)
-_PERSIST_PREFIX = _DATA_DIR if _HAS_PERSISTENT else BASE_DIR
 
 
 def _sqlite_uri(path: Path) -> str:
@@ -36,17 +30,17 @@ class Config:
 
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-me")
 
-    # Default DB to the persistent volume if we have one, else repo root.
+    # Local SQLite by default; override with DATABASE_URL in production.
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "DATABASE_URL",
-        _sqlite_uri(_PERSIST_PREFIX / "corai.db"),
+        _sqlite_uri(BASE_DIR / "corai.db"),
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # Model artifact — same idea: persistent volume if available.
+    # Model artifact path; default lives next to the source.
     MODEL_PATH = os.getenv(
         "MODEL_PATH",
-        str(_PERSIST_PREFIX / "models" / "corai-1.0.0.pkl"),
+        str(BASE_DIR / "models" / "corai-1.0.0.pkl"),
     )
     MODEL_VERSION = os.getenv("MODEL_VERSION", "1.0.0")
 

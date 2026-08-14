@@ -58,8 +58,11 @@ ml/evaluation/report.json
 /data/*
 !/data/.gitkeep
 
-# Trained model artifacts are NOT in the repo (re-trained on first boot).
-# If you want to ship a pre-trained model, add `models/*.pkl` exceptions
-# here AND commit the .pkl file.
+# Trained model artifacts: the v1.0.0 pkl IS shipped with the repo so
+# Render deployments don't retrain on every cold start (free-tier 512 MB RAM
+# + port-scan timeout). Future retrainings land in newer versioned
+# filenames (e.g. corai-1.1.0.pkl) — keep those gitignored.
 models/*.pkl
 !models/.gitkeep
+!models/corai-1.0.0.pkl
+!models/corai-1.0.0.scaler.pkl

@@ -56,17 +56,19 @@ USER appuser
 EXPOSE 10000
 
 # Boot sequence:
-#   * init-db creates tables on first run, idempotent afterwards
-#   * ml.train is no-op if the artifact at MODEL_PATH already exists
-#   * gunicorn binds 0.0.0.0:$PORT (Render sets $PORT)
+#   * Pre-trained model artifact ships in the repo (models/corai-1.0.0.pkl)
+#     so Render's free-tier port scan doesn't time out waiting for in-container
+#     training to finish.
+#   * `flask init-db` is idempotent and runs in <1 s.
+#   * DB schema is also created on first request by `_ensure_schema` in
+#     app/__init__.py — the eager `init-db` here is belt-and-braces.
+#   * gunicorn binds 0.0.0.0:${PORT} immediately after boot setup.
 # We use the `app:create_app` form (no parens) — the factory's default
-# config_object resolves to `app.config.Config`, which is the canonical
-# module path inside this repo.
+# config_object resolves to `app.config.Config`.
 ENTRYPOINT ["/usr/bin/tini", "--"]
 
 CMD ["sh", "-c", "\
     flask --app 'app:create_app' init-db && \
-    python -m ml.train --data heart.csv --version 1.0.0 && \
     gunicorn --workers 2 --threads 2 --bind 0.0.0.0:${PORT} --timeout 120 \
              'app:create_app' \
 "]

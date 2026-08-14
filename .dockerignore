@@ -26,9 +26,10 @@ corai.db-journal
 *.sqlite3
 instance/uploads
 
-# Built model artifacts (trained inside the container; pull models/*.pkl in
-# only if you've already committed them)
-models/*.pkl
+# Built model artifacts are SHIPPED for the pinned 1.0.0 version (see
+# Dockerfile: no in-container training on Render free tier). Later
+# versioned pkl files are still ignored to keep the image lean.
+# models/*.pkl  ← intentionally NOT excluded for 1.0.0
 
 # Editor / OS junk
 .vscode

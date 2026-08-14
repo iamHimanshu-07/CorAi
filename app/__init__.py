@@ -10,7 +10,7 @@ from flask import Flask
 from .extensions import db, limiter, login_manager, migrate
 
 
-def create_app(config_object: str | object = "config.Config") -> Flask:
+def create_app(config_object: str | object = "app.config.Config") -> Flask:
     app = Flask(
         __name__,
         instance_relative_config=False,

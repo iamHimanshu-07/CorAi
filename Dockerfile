@@ -59,11 +59,14 @@ EXPOSE 10000
 #   * init-db creates tables on first run, idempotent afterwards
 #   * ml.train is no-op if the artifact at MODEL_PATH already exists
 #   * gunicorn binds 0.0.0.0:$PORT (Render sets $PORT)
+# We use the `app:create_app` form (no parens) — the factory's default
+# config_object resolves to `app.config.Config`, which is the canonical
+# module path inside this repo.
 ENTRYPOINT ["/usr/bin/tini", "--"]
 
 CMD ["sh", "-c", "\
-    flask --app 'app:create_app()' init-db && \
+    flask --app 'app:create_app' init-db && \
     python -m ml.train --data heart.csv --version 1.0.0 && \
     gunicorn --workers 2 --threads 2 --bind 0.0.0.0:${PORT} --timeout 120 \
-             'app:create_app()' \
+             'app:create_app' \
 "]

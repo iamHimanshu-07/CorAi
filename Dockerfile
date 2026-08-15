@@ -16,12 +16,12 @@
 
 FROM python:3.11-slim
 
+# NOTE: do NOT bake PORT into the image. Render injects PORT at runtime
+# and a baked default can shadow it. The CMD below reads $PORT directly.
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    # NOTE: do NOT bake PORT into the image. Render injects PORT at runtime
-    # and a baked default can shadow it. The CMD below reads $PORT directly.
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # OS deps for heavy wheels (numpy/pandas/scikit-learn/lightgbm/shap).
 RUN apt-get update && apt-get install -y --no-install-recommends \

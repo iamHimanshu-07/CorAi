@@ -8,6 +8,21 @@
 {% set models = report.models %}
 
 <div style="margin: 2rem 0;">
+  {% if current_user.is_authenticated and current_user.is_admin %}
+  <div style="background: #eff6ff; border: 1px solid #2563eb; border-radius: 8px; padding: 1rem 1.5rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <strong style="color: #1e3a8a;">Admin:</strong>
+      <span style="color: #475569;">Want to regenerate this report? Runs <code>python -m ml.train --data heart.csv --version 1.0.0</code> in-process.</span>
+    </div>
+    <form method="post" action="{{ url_for('metrics.retrain') }}" style="margin: 0;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <button type="submit" class="btn btn-primary" onclick="this.disabled=true; this.textContent='Starting…';">
+        Retrain
+      </button>
+    </form>
+  </div>
+  {% endif %}
+
   <!-- Header Banner -->
   <div style="background: #ffffff; border-radius: 12px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 2rem;">
     <div>

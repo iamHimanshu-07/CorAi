@@ -1,0 +1,120 @@
+{
+  "version": "1.0.0",
+  "dataset": {
+    "path": "heart.csv",
+    "rows": 918,
+    "positive_rate": 0.5533769063180828,
+    "features": [
+      "Age",
+      "RestingBP",
+      "Cholesterol",
+      "FastingBS",
+      "MaxHR",
+      "Oldpeak",
+      "Sex",
+      "ChestPainType",
+      "RestingECG",
+      "ExerciseAngina",
+      "ST_Slope"
+    ],
+    "target": "HeartDisease"
+  },
+  "split": {
+    "test_size": 0.2,
+    "stratified": true,
+    "random_state": 42,
+    "train_rows": 734,
+    "test_rows": 184
+  },
+  "models": [
+    {
+      "name": "logreg",
+      "metrics": {
+        "accuracy": 0.875,
+        "precision": 0.8558558558558559,
+        "recall": 0.9313725490196079,
+        "f1": 0.892018779342723,
+        "roc_auc": 0.9260521281683406,
+        "brier": 0.10329222123303607
+      },
+      "cv_roc_auc_mean": 0.9413051470588236,
+      "cv_roc_auc_std": 0.014071532603276014
+    },
+    {
+      "name": "rf",
+      "metrics": {
+        "accuracy": 0.8913043478260869,
+        "precision": 0.8796296296296297,
+        "recall": 0.9313725490196079,
+        "f1": 0.9047619047619048,
+        "roc_auc": 0.9331061692969871,
+        "brier": 0.08978845277762317
+      },
+      "cv_roc_auc_mean": 0.9273853291316527,
+      "cv_roc_auc_std": 0.01832686913055093
+    },
+    {
+      "name": "xgb",
+      "metrics": {
+        "accuracy": 0.8858695652173914,
+        "precision": 0.900990099009901,
+        "recall": 0.8921568627450981,
+        "f1": 0.896551724137931,
+        "roc_auc": 0.928323768531803,
+        "brier": 0.09875821673348245
+      },
+      "cv_roc_auc_mean": 0.9130681022408963,
+      "cv_roc_auc_std": 0.021457207210857
+    },
+    {
+      "name": "lgbm",
+      "metrics": {
+        "accuracy": 0.8695652173913043,
+        "precision": 0.875,
+        "recall": 0.8921568627450981,
+        "f1": 0.883495145631068,
+        "roc_auc": 0.9294595887135342,
+        "brier": 0.09813810601536599
+      },
+      "cv_roc_auc_mean": 0.9124273459383753,
+      "cv_roc_auc_std": 0.021540065090428023
+    }
+  ],
+  "best_model": {
+    "name": "logreg",
+    "selection_metric": "cv_roc_auc_mean",
+    "cv_roc_auc_mean": 0.9413051470588236,
+    "cv_roc_auc_std": 0.014071532603276014
+  },
+  "feature_names_after_preprocessing": [
+    "num__Age",
+    "num__RestingBP",
+    "num__Cholesterol",
+    "num__FastingBS",
+    "num__MaxHR",
+    "num__Oldpeak",
+    "cat__Sex_F",
+    "cat__Sex_M",
+    "cat__ChestPainType_ASY",
+    "cat__ChestPainType_ATA",
+    "cat__ChestPainType_NAP",
+    "cat__ChestPainType_TA",
+    "cat__RestingECG_LVH",
+    "cat__RestingECG_Normal",
+    "cat__RestingECG_ST",
+    "cat__ExerciseAngina_N",
+    "cat__ExerciseAngina_Y",
+    "cat__ST_Slope_Down",
+    "cat__ST_Slope_Flat",
+    "cat__ST_Slope_Up"
+  ],
+  "trained_at": "2026-08-14T15:51:44.784031+00:00",
+  "tools": {
+    "sklearn": "1.9.0",
+    "numpy": "2.4.6",
+    "pandas": "3.0.3",
+    "imbalanced_learn": "0.14.2",
+    "xgboost": "3.3.0",
+    "lightgbm": "4.7.0"
+  }
+}

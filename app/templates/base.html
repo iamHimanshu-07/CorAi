@@ -28,6 +28,7 @@
             <a href="{{ url_for('admin.audit') }}">Audit</a>
           {% endif %}
           <a href="{{ url_for('about.view_about') }}">About Us</a>
+          <a href="{{ url_for('docs.index') }}">Docs</a>
 
           {# ---- User menu: avatar + dropdown for logout ---- #}
           <div class="user-menu" data-user-menu>
@@ -58,6 +59,7 @@
         {% else %}
           <a href="{{ url_for('metrics.show') }}">Metrics</a>
           <a href="{{ url_for('about.view_about') }}">About Us</a>
+          <a href="{{ url_for('docs.index') }}">Docs</a>
           <a href="{{ url_for('auth.login') }}">Sign in</a>
           <a href="{{ url_for('auth.register') }}">Register</a>
         {% endif %}

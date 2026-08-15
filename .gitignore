@@ -38,14 +38,17 @@ coverage.xml
 .env.local
 *.log
 
-# Generated artifacts — DO NOT COMMIT
+# Generated artifacts — DO NOT COMMIT (except evaluation report/PNGs)
 corai.db
 corai.db-journal
 *.sqlite
 *.sqlite3
 instance/
-ml/evaluation/*.png
-ml/evaluation/report.json
+
+# ml/evaluation/report.json + per-model PNGs are SHIPPED with the repo so the
+# /metrics page works out-of-the-box on Render free tier (no shell access to
+# retrain). If you retrain locally, the new artifacts overwrite these — git
+# will just record the new versions on the next commit.
 
 # Cached RAG index and HuggingFace model cache (regenerated at runtime)
 .rag_cache/

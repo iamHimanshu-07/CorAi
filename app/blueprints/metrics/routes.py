@@ -3,13 +3,36 @@
 from __future__ import annotations
 
 import json
+import threading
 from pathlib import Path
 
-from flask import Blueprint, abort, current_app, render_template
+from flask import (
+    Blueprint,
+    abort,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    url_for,
+)
+from flask_login import current_user, login_required
 
 from ...extensions import db
 
 bp = Blueprint("metrics", __name__)
+
+
+# Background training state — admin can trigger a retrain from the UI
+# without needing Render shell access. Status is exposed to /metrics/train_status.
+_train_lock = threading.Lock()
+_train_status: dict = {
+    "running": False,
+    "started_at": None,
+    "finished_at": None,
+    "ok": None,
+    "error": None,
+    "log_tail": [],
+}
 
 
 def _report_path() -> Path:
@@ -82,3 +105,121 @@ def artifact(artifact: str):
         abort(404)
     from flask import send_file
     return send_file(out)
+
+
+# --------------------------------------------------------------------------- #
+# Admin: trigger a model retrain from the UI.
+#
+# On Render free tier you don't have shell access, so the metrics page would
+# stay empty until someone commits a fresh report.json + PNGs. This route
+# lets an admin run ``python -m ml.train`` in-process inside the web worker
+# (via ml.train.train_pipeline), so /metrics picks up new diagnostics after
+# the run finishes.
+#
+# Training runs in a background thread so the request can return immediately
+# with a "training started" flash. Status is polled via /metrics/train_status.
+# Render free has 512 MB RAM — the pipeline uses ~300-400 MB peak (sklearn +
+# SMOTE + matplotlib), so this can OOM if anything else is loaded. We guard
+# with the lock to prevent concurrent runs.
+# --------------------------------------------------------------------------- #
+def _admin_required(view):
+    from functools import wraps
+    @wraps(view)
+    @login_required
+    def wrapper(*args, **kwargs):
+        if not current_user.is_admin:
+            abort(403)
+        return view(*args, **kwargs)
+    return wrapper
+
+
+def _run_train(data_path: str, version: str) -> None:
+    """Background worker that runs the training pipeline."""
+    import logging
+    from datetime import UTC, datetime
+
+    log = logging.getLogger("corai.metrics.retrain")
+
+    def _emit(msg: str) -> None:
+        with _train_lock:
+            _train_status["log_tail"].append(msg)
+            # Keep the tail bounded — last 50 lines is plenty for the UI.
+            if len(_train_status["log_tail"]) > 50:
+                _train_status["log_tail"] = _train_status["log_tail"][-50:]
+
+    try:
+        _emit(f"[{datetime.now(UTC).isoformat()}] Starting training (version={version})")
+        # Import lazily so the metrics blueprint can still load on Render free
+        # (where training deps are present but heavy).
+        from ml.train import train_pipeline  # noqa: PLC0415
+        report = train_pipeline(version=version, data_path=Path(data_path))
+        _emit(f"[{datetime.now(UTC).isoformat()}] Training finished. best_model={report.get('best_model', {}).get('name')}")
+        with _train_lock:
+            _train_status["ok"] = True
+    except Exception as exc:  # noqa: BLE001
+        log.exception("Retrain failed")
+        _emit(f"[error] {exc!r}")
+        with _train_lock:
+            _train_status["ok"] = False
+            _train_status["error"] = repr(exc)
+    finally:
+        with _train_lock:
+            _train_status["running"] = False
+            _train_status["finished_at"] = datetime.now(UTC).isoformat()
+
+
+@bp.post("/metrics/retrain")
+@_admin_required
+def retrain():
+    """Kick off a background retrain. Admins only."""
+    with _train_lock:
+        if _train_status["running"]:
+            flash("A retrain is already running — check /metrics/train_status.", "warning")
+            return redirect(url_for("metrics.show"))
+        data_path = current_app.config.get("CorAi_TRAIN_DATA", "heart.csv")
+        version = current_app.config.get("CorAi_MODEL_VERSION", "1.0.0")
+        _train_status.update({
+            "running": True,
+            "started_at": None,
+            "finished_at": None,
+            "ok": None,
+            "error": None,
+            "log_tail": [],
+            "version": version,
+            "data_path": data_path,
+        })
+
+    from datetime import UTC, datetime
+    with _train_lock:
+        _train_status["started_at"] = datetime.now(UTC).isoformat()
+
+    thread = threading.Thread(
+        target=_run_train,
+        args=(data_path, version),
+        name="corai-retrain",
+        daemon=True,
+    )
+    thread.start()
+    flash(
+        f"Retrain started (version={version}, data={data_path}). "
+        "Refresh /metrics in 30-90 s — Render free is slow.",
+        "info",
+    )
+    return redirect(url_for("metrics.show"))
+
+
+@bp.get("/metrics/train_status")
+@_admin_required
+def train_status():
+    """JSON snapshot of the in-flight or last retrain."""
+    with _train_lock:
+        return {
+            "running": _train_status["running"],
+            "started_at": _train_status.get("started_at"),
+            "finished_at": _train_status.get("finished_at"),
+            "ok": _train_status.get("ok"),
+            "error": _train_status.get("error"),
+            "version": _train_status.get("version"),
+            "data_path": _train_status.get("data_path"),
+            "log_tail": list(_train_status.get("log_tail", [])),
+        }

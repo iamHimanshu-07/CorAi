@@ -6,9 +6,23 @@
 <header class="page-header">
   <div>
     <h1>Model metrics</h1>
-    <p class="muted">No evaluation report yet. Generate one with <code>python -m ml.train --data heart.csv --version 1.0.0</code>.</p>
+    <p class="muted">No evaluation report yet. Generate one by training the model — this takes 30-90 s on Render free tier.</p>
   </div>
 </header>
+
+{% if current_user.is_authenticated and current_user.is_admin %}
+<section class="panel" style="border: 1px solid #2563eb; background: #eff6ff;">
+  <h2>Admin — Generate evaluation report</h2>
+  <p class="muted">Runs <code>python -m ml.train --data heart.csv --version 1.0.0</code> in-process inside the web worker (no Render shell needed). Refresh this page 30-90 s after clicking.</p>
+  <form method="post" action="{{ url_for('metrics.retrain') }}" style="margin: 1rem 0;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <button type="submit" class="btn btn-primary" onclick="this.disabled=true; this.textContent='Starting…';">
+      Run training now
+    </button>
+  </form>
+  <p class="muted"><a href="{{ url_for('metrics.train_status') }}">View live training status →</a></p>
+</section>
+{% endif %}
 
 <section class="panel">
   <h2>Live prediction distribution</h2>

@@ -73,6 +73,6 @@ ENTRYPOINT ["/usr/bin/tini", "--"]
 
 CMD ["sh", "-c", "\
     flask --app 'app:create_app()' init-db || echo 'init-db skipped, will lazy-create'; \
-    gunicorn --workers 2 --threads 2 --bind 0.0.0.0:${PORT} --timeout 120 \
-             --factory 'app:create_app' \
+    exec gunicorn --workers 2 --threads 2 --bind 0.0.0.0:${PORT} --timeout 120 \
+             --preload 'app:create_app()' \
 "]

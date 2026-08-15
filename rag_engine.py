@@ -35,23 +35,36 @@ log = logging.getLogger(__name__)
 # the rest of the Flask app keeps working. The chatbot blueprint falls back to
 # the OpenAI path if ``is_configured()`` is False.
 #
-# LangChain v1 split the legacy chains (``create_retrieval_chain``,
-# ``create_stuff_documents_chain``) out of the core package into
-# ``langchain-classic``, and the text splitter out into
-# ``langchain-text-splitters``. We import from those.
-_RAG_DEPS_OK = True
+# IMPORTANT: we keep ``_RAG_DEPS_OK`` as ``None`` (unknown) until the first
+# chat request asks. Importing langchain + faiss-cpu + sentence-transformers
+# here would eagerly load PyTorch, which OOM-kills Render's 512 MB free-tier
+# workers before gunicorn ever binds $PORT.
+_RAG_DEPS_OK: bool | None = None
 _import_error: str | None = None
-try:
-    from langchain_text_splitters import RecursiveCharacterTextSplitter
-    from langchain_community.vectorstores import FAISS
-    from langchain_community.embeddings import HuggingFaceEmbeddings
-    from langchain_google_genai import ChatGoogleGenerativeAI
-    from langchain_classic.chains.retrieval import create_retrieval_chain
-    from langchain_classic.chains.combine_documents.stuff import create_stuff_documents_chain
-    from langchain_core.prompts import ChatPromptTemplate
-except Exception as exc:  # noqa: BLE001
-    _RAG_DEPS_OK = False
-    _import_error = repr(exc)
+_deps_lock = threading.Lock()
+
+
+def _probe_deps() -> bool:
+    """One-shot probe of RAG dependencies. Safe to call multiple times."""
+    global _RAG_DEPS_OK, _import_error
+    if _RAG_DEPS_OK is not None:
+        return _RAG_DEPS_OK
+    with _deps_lock:
+        if _RAG_DEPS_OK is not None:
+            return _RAG_DEPS_OK
+        try:
+            from langchain_text_splitters import RecursiveCharacterTextSplitter  # noqa: F401
+            from langchain_community.vectorstores import FAISS  # noqa: F401
+            from langchain_community.embeddings import HuggingFaceEmbeddings  # noqa: F401
+            from langchain_google_genai import ChatGoogleGenerativeAI  # noqa: F401
+            from langchain_classic.chains.retrieval import create_retrieval_chain  # noqa: F401
+            from langchain_classic.chains.combine_documents.stuff import create_stuff_documents_chain  # noqa: F401
+            from langchain_core.prompts import ChatPromptTemplate  # noqa: F401
+            _RAG_DEPS_OK = True
+        except Exception as exc:  # noqa: BLE001
+            _RAG_DEPS_OK = False
+            _import_error = repr(exc)
+    return _RAG_DEPS_OK
 
 
 # --------------------------------------------------------------------------- #
@@ -193,21 +206,21 @@ def configure(
 def is_configured() -> bool:
     """True when the RAG pipeline is *able* to answer questions.
 
-    ``ready`` is True after the chain has been built at least once; we
-    expose ``is_configured`` separately so callers (e.g. the chatbot
-    blueprint) can route to RAG as soon as a key is present, even before
-    the chain has been lazily built.
+    Probes the heavy deps on first call (cheap on subsequent calls). The
+    probe is what makes the RAG chain bootable on Render free tier — the
+    torch/transformers stack only loads when a chat request actually asks.
     """
-    return _RAG_DEPS_OK and _has_google_key()
+    return _probe_deps() and _has_google_key()
 
 
 def status() -> dict[str, Any]:
     """Debug snapshot — useful for a /healthz-style endpoint."""
+    deps_ok = _probe_deps() if _RAG_DEPS_OK is None else _RAG_DEPS_OK
     return {
-        "deps_ok": _RAG_DEPS_OK,
+        "deps_ok": deps_ok,
         "deps_error": _import_error,
-        "configured": is_configured(),
-        "ready": _RAG_DEPS_OK and _has_google_key() and _rag_chain is not None,
+        "configured": deps_ok and _has_google_key(),
+        "ready": deps_ok and _has_google_key() and _rag_chain is not None,
         "embed_model": _embed_model_name,
         "gemini_model": _gemini_model_name,
         "index_dir": str(_index_dir),
@@ -226,7 +239,7 @@ def _build_chain() -> Any:
     ``FAISS.save_local`` writes. We rebuild whenever the source text changes
     or the cache directory is empty.
     """
-    if not _RAG_DEPS_OK:
+    if not _probe_deps():
         raise RuntimeError(
             f"rag_engine: missing dependencies ({_import_error}). "
             "Install langchain, langchain-community, langchain-google-genai, "
@@ -234,6 +247,16 @@ def _build_chain() -> Any:
         )
     if not _has_google_key():
         raise RuntimeError("GOOGLE_API_KEY is not set")
+
+    # Imports are gated to first chat request to keep Render free-tier
+    # workers within their 512 MB RAM cap. See _probe_deps for the rationale.
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+    from langchain_community.vectorstores import FAISS
+    from langchain_community.embeddings import HuggingFaceEmbeddings
+    from langchain_google_genai import ChatGoogleGenerativeAI
+    from langchain_classic.chains.retrieval import create_retrieval_chain
+    from langchain_classic.chains.combine_documents.stuff import create_stuff_documents_chain
+    from langchain_core.prompts import ChatPromptTemplate
 
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=400, chunk_overlap=40)
     docs = text_splitter.create_documents([corai_kb_content])
@@ -322,7 +345,7 @@ def get_bot_response_safe(user_query: str) -> str:
     fallback string instead. Useful for chat routes that prefer 200 OK with
     an explanatory message over a 500.
     """
-    if not _RAG_DEPS_OK:
+    if not _probe_deps():
         return (
             "The RAG chatbot isn't fully wired up yet on this server "
             "(missing dependencies). The rest of CorAi is still working."
@@ -345,7 +368,7 @@ def get_bot_response_safe(user_query: str) -> str:
 
 if __name__ == "__main__":
     import sys
-    if not _RAG_DEPS_OK:
+    if not _probe_deps():
         print("Missing deps:", _import_error)
         sys.exit(1)
     if not os.getenv("GOOGLE_API_KEY"):

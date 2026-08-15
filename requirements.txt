@@ -13,7 +13,7 @@ python-dotenv==1.0.1
 gunicorn==23.0.0
 reportlab==4.2.2
 
-# Data Science & Machine Learning Core
+# Data Science & Machine Learning Core (heart-disease model)
 numpy>=2.0.0
 pandas>=2.2.3
 scikit-learn>=1.5.0
@@ -42,19 +42,30 @@ requests
 plotly
 flask-cors
 
-# RAG chatbot (HeartAI Copilot) — optional but recommended
-# Note: langchain 1.x split text-splitter and the legacy "chains" helpers
-# into separate distributions. Pin both.
-langchain>=1.0.0
-langchain-core>=1.0.0
-langchain-text-splitters>=1.0.0
-langchain-classic>=1.0.0
-langchain-community>=0.4.0
-langchain-google-genai>=2.0.0
-faiss-cpu>=1.8.0
-sentence-transformers>=3.0.0
-google-generativeai>=0.7.0
+# ---------------------------------------------------------------------------
+# RAG chatbot (HeartAI Copilot) — OPTIONAL on Render.
+#
+# The full RAG stack (langchain + langchain-classic + langchain-google-genai +
+# faiss-cpu + sentence-transformers + google-generativeai) pulls in PyTorch and
+# several hundred MB of native wheels. Render's free web service has a 512 MB
+# RAM cap; importing sentence-transformers at boot OOM-kills gunicorn (exit
+# 137) so it never binds $PORT, and Render logs "No open ports detected".
+#
+# To enable the chatbot on a host with more RAM (Render Starter+, Fly, a VPS,
+# etc.), uncomment the block below and re-deploy. The chat route falls back
+# to OpenAI (LLM_API_KEY) when RAG deps are missing.
+#
+# langchain>=1.0.0
+# langchain-core>=1.0.0
+# langchain-text-splitters>=1.0.0
+# langchain-classic>=1.0.0
+# langchain-community>=0.4.0
+# langchain-google-genai>=2.0.0
+# faiss-cpu>=1.8.0
+# sentence-transformers>=3.0.0
+# google-generativeai>=0.7.0
+# ---------------------------------------------------------------------------
 
-# FastAPI server (for standalone /api/chat)
+# FastAPI server (for standalone /api/chat) — not used by the gunicorn boot path.
 fastapi>=0.110.0
 uvicorn>=0.27.0

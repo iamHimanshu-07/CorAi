@@ -33,26 +33,34 @@ def create_app(config_object: str | object = "app.config.Config") -> Flask:
     login_manager.login_view = "auth.login"
     login_manager.login_message_category = "warning"
 
-    # Configure RAG engine (HeartAI Copilot) with Gemini API key from config
-    try:
-        import rag_engine
-        # Prefer GOOGLE_API_KEY (current), fall back to legacy GEMINI_API_KEY.
-        gemini_key = app.config.get("GOOGLE_API_KEY") or app.config.get("GEMINI_API_KEY")
-        if gemini_key:
-            # RAG FAISS index lives in the repo-local .rag_cache so it's
-            # recreated on cold starts (free-tier friendly).
+    # Configure RAG engine (HeartAI Copilot) with Gemini API key from config.
+    # IMPORTANT: do NOT ``import rag_engine`` here. rag_engine pulls in
+    # langchain / faiss-cpu / sentence-transformers / torch at module load,
+    # which blows Render's 512 MB free-tier cap and SIGKILLs (exit 137) the
+    # gunicorn worker before it ever binds $PORT — surfacing as
+    # "No open ports detected" in the Render build log.
+    #
+    # Instead, only configure RAG if a key is present, and rely on the lazy
+    # import inside ``rag_engine.configure`` and ``get_bot_response`` to
+    # load the heavy deps on first chat request. If the deps aren't even
+    # installed (slim requirements.txt), the chat route falls back to
+    # OpenAI or a friendly "needs configuration" message.
+    gemini_key = app.config.get("GOOGLE_API_KEY") or app.config.get("GEMINI_API_KEY")
+    if gemini_key:
+        try:
+            import rag_engine  # lazy: heavy chain only loaded on chat hit
             rag_engine.configure(
                 google_api_key=gemini_key,
                 index_dir=os.getenv("CorAi_RAG_INDEX", ".rag_cache/corai_index"),
             )
             app.logger.info("RAG engine configured with Gemini API key")
-        else:
-            app.logger.warning(
-                "GOOGLE_API_KEY/GEMINI_API_KEY not set; HeartAI Copilot will "
-                "show a configuration message in the chat widget."
-            )
-    except Exception as exc:  # noqa: BLE001
-        app.logger.warning("RAG engine not available: %s", exc)
+        except Exception as exc:  # noqa: BLE001
+            app.logger.warning("RAG engine not available: %s", exc)
+    else:
+        app.logger.warning(
+            "GOOGLE_API_KEY/GEMINI_API_KEY not set; HeartAI Copilot will "
+            "show a configuration message in the chat widget."
+        )
 
     # Blueprints
     from .blueprints.admin.routes import bp as admin_bp

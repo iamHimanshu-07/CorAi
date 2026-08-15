@@ -20,10 +20,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    # Render injects $PORT; default to 10000 for local sanity checks.
-    PORT=10000
+    # NOTE: do NOT bake PORT into the image. Render injects PORT at runtime
+    # and a baked default can shadow it. The CMD below reads $PORT directly.
 
-# OS deps for heavy wheels (numpy/pandas/scikit-learn/lightgbm/shap/faiss).
+# OS deps for heavy wheels (numpy/pandas/scikit-learn/lightgbm/shap).
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
         gcc \
@@ -65,10 +65,14 @@ EXPOSE 10000
 #   * gunicorn binds 0.0.0.0:${PORT} immediately after boot setup.
 # We use the `app:create_app` form (no parens) — the factory's default
 # config_object resolves to `app.config.Config`.
+# --preload: load the app once per worker (cheaper RSS than per-process fork
+#   when the model artifact and sklearn are heavy).
+# --timeout 120: free-tier CPU is slow; first request after cold start can
+#   take 30-60 s while sklearn loads.
 ENTRYPOINT ["/usr/bin/tini", "--"]
 
 CMD ["sh", "-c", "\
     flask --app 'app:create_app' init-db && \
     gunicorn --workers 2 --threads 2 --bind 0.0.0.0:${PORT} --timeout 120 \
-             'app:create_app' \
+             --preload 'app:create_app' \
 "]

@@ -72,7 +72,7 @@ EXPOSE 10000
 ENTRYPOINT ["/usr/bin/tini", "--"]
 
 CMD ["sh", "-c", "\
-    flask --app 'app:create_app()' init-db || echo 'init-db skipped, will lazy-create'; \
+    flask --app '\''app:create_app()'\'' init-db || echo '\''init-db skipped, will lazy-create'\''; \
     exec gunicorn --workers 2 --threads 2 --bind 0.0.0.0:${PORT} --timeout 120 \
-             --preload 'app:create_app()' \
+             --preload '\''app:create_app()'\'' \
 "]

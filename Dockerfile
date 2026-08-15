@@ -59,10 +59,10 @@ EXPOSE 10000
 #   * Pre-trained model artifact ships in the repo (models/corai-1.0.0.pkl)
 #     so Render's free-tier port scan doesn't time out waiting for in-container
 #     training to finish.
-#   * `flask init-db` is idempotent and runs in <1 s.
-#   * DB schema is also created on first request by `_ensure_schema` in
-#     app/__init__.py — the eager `init-db` here is belt-and-braces.
-#   * gunicorn binds 0.0.0.0:${PORT} immediately after boot setup.
+#   * `flask init-db` is idempotent and runs in <1 s. The `|| echo` lets
+#     gunicorn start even if init-db hiccups (e.g. transient DB lock) —
+#     `_ensure_schema` in app/__init__.py will lazy-create on first request.
+#   * gunicorn binds 0.0.0.0:${PORT} immediately after.
 # We use the `app:create_app` form (no parens) — the factory's default
 # config_object resolves to `app.config.Config`.
 # --preload: load the app once per worker (cheaper RSS than per-process fork
@@ -72,7 +72,7 @@ EXPOSE 10000
 ENTRYPOINT ["/usr/bin/tini", "--"]
 
 CMD ["sh", "-c", "\
-    flask --app 'app:create_app' init-db && \
+    flask --app 'app:create_app' init-db || echo 'init-db skipped, will lazy-create'; \
     gunicorn --workers 2 --threads 2 --bind 0.0.0.0:${PORT} --timeout 120 \
              --preload 'app:create_app' \
 "]

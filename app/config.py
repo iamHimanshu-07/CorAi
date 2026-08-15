@@ -4,12 +4,19 @@ Resolution order:
 
 1. Environment variable (e.g. ``DATABASE_URL``, ``MODEL_PATH``) — set these
    in production to override defaults.
-2. Otherwise fall back to repo-local paths (``corai.db``, ``models/``,
-   ``.rag_cache/``, ``.hf_cache/``).
+2. Otherwise fall back to repo-local paths (``instance/corai.db``,
+   ``models/``, ``.rag_cache/``, ``.hf_cache/``).
 
-The Dockerfile's boot sequence (`flask init-db` + `python -m ml.train`)
-recreates the SQLite DB and model artifact on every cold start, so a
-transient filesystem (like Render's free tier) is fine.
+The Dockerfile's boot sequence (`flask init-db`) recreates the SQLite DB
+on every cold start, so a transient filesystem (like Render's free tier)
+is fine.
+
+The SQLite file lives under ``instance/`` rather than the project root
+so the parent directory is owned by ``appuser`` and writable at runtime.
+Putting it at the project root caused ``sqlite3.OperationalError: unable
+to open database file`` on Render because SQLite needs the parent dir to
+exist and be writable, and the Dockerfile only chowns ``instance/``,
+``models/``, ``.rag_cache/``, ``.hf_cache/``.
 """
 
 from __future__ import annotations
@@ -21,7 +28,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 def _sqlite_uri(path: Path) -> str:
-    """Build a SQLAlchemy SQLite URI from an absolute POSIX path."""
+    """Build a SQLAlchemy SQLite URI from an absolute POSIX path.
+
+    Three-slash form (``sqlite:///abs/path``) is correct for an absolute
+    filesystem path; four slashes would imply ``localhost`` and a relative
+    path. Using ``as_posix()`` keeps the URI forward-slash-separated even
+    on Windows where the OS path uses backslashes.
+    """
     return f"sqlite:///{path.as_posix()}"
 
 
@@ -31,9 +44,11 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-only-change-me")
 
     # Local SQLite by default; override with DATABASE_URL in production.
+    # Stored under instance/ so the parent dir is reliably writable on
+    # Render free tier (chown'd to appuser in the Dockerfile).
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "DATABASE_URL",
-        _sqlite_uri(BASE_DIR / "corai.db"),
+        _sqlite_uri(BASE_DIR / "instance" / "corai.db"),
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 

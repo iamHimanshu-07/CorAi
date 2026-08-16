@@ -88,9 +88,13 @@ class Config:
 
     # Bootstrap admin (seeded on first request if missing)
     BOOTSTRAP_DOCTOR_USERNAME = os.getenv("BOOTSTRAP_DOCTOR_USERNAME", "doctor")
-    BOOTSTRAP_DOCTOR_PASSWORD = os.getenv("BOOTSTRAP_DOCTOR_PASSWORD", "corai2026")
+    BOOTSTRAP_DOCTOR_PASSWORD = os.getenv("BOOTSTRAP_DOCTOR_PASSWORD", "doctor123")
     BOOTSTRAP_DOCTOR_EMAIL = os.getenv("BOOTSTRAP_DOCTOR_EMAIL", "doctor@corai.local")
     BOOTSTRAP_DOCTOR_AREA = os.getenv("BOOTSTRAP_DOCTOR_AREA", "India")
+    BOOTSTRAP_ADMIN_USERNAME = os.getenv("BOOTSTRAP_ADMIN_USERNAME", "admin")
+    BOOTSTRAP_ADMIN_PASSWORD = os.getenv("BOOTSTRAP_ADMIN_PASSWORD", "admin123")
+    BOOTSTRAP_ADMIN_EMAIL = os.getenv("BOOTSTRAP_ADMIN_EMAIL", "admin@corai.local")
+    BOOTSTRAP_ADMIN_AREA = os.getenv("BOOTSTRAP_ADMIN_AREA", "India")
 
 
 class TestConfig(Config):

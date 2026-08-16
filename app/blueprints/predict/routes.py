@@ -129,13 +129,7 @@ def pdf_report(prediction_id: int):
     for k, v in pred.input_features.items():
         story.append(Paragraph(f"{k}: {v}", styles["Normal"]))
     story.append(Spacer(1, 0.3 * inch))
-    story.append(
-        Paragraph(
-            "Educational use only. Not a clinical diagnosis. See MODEL_CARD.md.",
-            styles["Italic"],
-        )
-    )
-    doc.build(story)
+        doc.build(story)
     buffer.seek(0)
     from flask import send_file
     return send_file(

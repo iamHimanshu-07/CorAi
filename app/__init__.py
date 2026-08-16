@@ -90,10 +90,7 @@ def create_app(config_object: str | object = "app.config.Config") -> Flask:
     app.register_blueprint(report_bp)
     app.register_blueprint(map_bp)
     app.register_blueprint(about_bp)
-    # Operator-facing deployment guide (Generate metrics / Enable chatbot).
-    from .blueprints.docs.routes import bp as docs_bp
-    app.register_blueprint(docs_bp)
-
+    
     # Health checks
     from .health import bp as health_bp
     app.register_blueprint(health_bp)

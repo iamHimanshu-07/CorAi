@@ -340,7 +340,7 @@ def _draw_footer(canvas, doc: _PdfDoc) -> None:
     canvas.drawString(
         doc.leftMargin,
         0.45 * inch,
-        "Educational use only. Not a clinical diagnosis. See MODEL_CARD.md.",
+        "",
     )
 
     # Right: page N of M
@@ -494,11 +494,7 @@ def _build_story(report, patient, prediction, explanations, generated_by,
     story.append(cover_table)
 
     story.append(Spacer(1, 1.0 * inch))
-    story.append(Paragraph(
-        "Educational use only. Not a clinical diagnosis. "
-        "Please consult a qualified cardiologist for medical advice.",
-        styles["DisclaimerCenter"],
-    ))
+    # Educational disclaimer removed per requirement)
 
     story.append(PageBreak())
 

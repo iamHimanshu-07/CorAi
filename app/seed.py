@@ -27,6 +27,23 @@ def seed_default_doctor() -> None:
     db.session.commit()
     log.info(f"Seeded default doctor '{username}' (change the password in production!)")
     seed_doctors()
+    seed_admin()
+
+
+def seed_admin() -> None:
+    username = current_app.config["BOOTSTRAP_ADMIN_USERNAME"]
+    if User.query.filter_by(username=username).first():
+        return
+    admin = User(
+        username=username,
+        role="admin",
+        email=current_app.config["BOOTSTRAP_ADMIN_EMAIL"],
+        area=current_app.config.get("BOOTSTRAP_ADMIN_AREA", "India"),
+    )
+    admin.set_password(current_app.config["BOOTSTRAP_ADMIN_PASSWORD"])
+    db.session.add(admin)
+    db.session.commit()
+    log.info(f"Seeded admin user '{username}' (change the password in production!)")
 
 
 def seed_doctors() -> None:

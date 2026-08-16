@@ -24,23 +24,6 @@
 </div>
 
 {# ========== Role-scope summary ========== #}
-<section class="role-scope">
-  <div class="scope-tile" data-state="{% if current_user.is_doctor or current_user.is_admin %}yes{% else %}no{% endif %}">
-    <h4>Patients</h4>
-    <p>List, view, edit, and delete patient records.</p>
-    <span class="scope-state">{% if current_user.is_doctor or current_user.is_admin %}Available{% else %}Restricted{% endif %}</span>
-  </div>
-  <div class="scope-tile" data-state="yes">
-    <h4>Predictions</h4>
-    <p>{% if current_user.is_patient %}Run predictions on your own inputs and download PDF reports.{% else %}Run predictions on any patient and download PDF reports.{% endif %}</p>
-    <span class="scope-state">Available</span>
-  </div>
-  <div class="scope-tile" data-state="{% if current_user.is_admin %}yes{% else %}no{% endif %}">
-    <h4>Admin tools</h4>
-    <p>User management and full audit log.</p>
-    <span class="scope-state">{% if current_user.is_admin %}Available{% else %}Restricted{% endif %}</span>
-  </div>
-</section>
 
 {# ========== Page header ========== #}
 <header class="page-header">

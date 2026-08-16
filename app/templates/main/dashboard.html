@@ -38,7 +38,6 @@
   <p>
     {% if current_user.is_doctor or current_user.is_admin %}
       <a class="btn btn-secondary" href="{{ url_for('predict.form') }}">Run prediction →</a>
-      <a class="btn btn-primary" href="{{ url_for('patients.new_patient') }}">+ New patient</a>
     {% else %}
       <a class="btn btn-primary" href="{{ url_for('predict.form') }}">Run a prediction →</a>
     {% endif %}
@@ -103,7 +102,6 @@
 {# ================================================================== #}
 {% else %}
   <section class="kpi-row">
-    {{ m.kpi_block("Total patients", total_patients, "in the registry", accent="var(--text)") }}
     {{ m.kpi_block("Total predictions", total_predictions, "logged", accent="var(--primary)") }}
     {{ m.kpi_block("Low risk", risk_counts.Low, "patients", accent="var(--success)") }}
     {{ m.kpi_block("Moderate risk", risk_counts.Moderate, "patients", accent="var(--warning)") }}
@@ -118,7 +116,6 @@
           <thead>
             <tr>
               <th>#</th>
-              <th>Patient</th>
               <th>Risk</th>
               <th class="num">Probability</th>
               <th>Model</th>
@@ -130,7 +127,6 @@
             {% for pred in recent_predictions %}
               <tr>
                 <td>{{ pred.id }}</td>
-                <td><a href="{{ url_for('patients.detail', patient_id=pred.patient_id) }}">#{{ pred.patient_id }}</a></td>
                 <td>{{ m.pill(pred.risk, kind=pred.risk | lower) }}</td>
                 <td class="num">{{ '%0.2f' % pred.probability }}%</td>
                 <td>{{ pred.model_version }}</td>
@@ -150,47 +146,7 @@
     {% endif %}
   </section>
 
-  <section class="panel">
-    <h2>Recent patients</h2>
-    {% if recent_patients %}
-      <div class="table-wrap">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Name</th>
-              <th class="num">Age</th>
-              <th>Risk</th>
-              <th class="num">Probability</th>
-              <th>Created</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for p in recent_patients %}
-              <tr>
-                <td>{{ p.id }}</td>
-                <td><a href="{{ url_for('patients.detail', patient_id=p.id) }}">{{ p.name }}</a></td>
-                <td class="num">{{ '%0.1f' % p.age }}</td>
-                <td>{{ m.pill(p.risk or '—', kind=(p.risk | lower) if p.risk else 'neutral') }}</td>
-                <td class="num">{{ '%0.2f' % (p.probability or 0) }}%</td>
-                <td>{{ p.created_at.strftime('%Y-%m-%d %H:%M') if p.created_at else '' }}</td>
-                <td>
-                  <div class="action-menu">
-                    <a class="action-btn" data-kind="primary" href="{{ url_for('predict.form', patient_id=p.id) }}">Predict</a>
-                    <a class="action-btn" data-kind="danger" href="{{ url_for('patients.detail', patient_id=p.id) }}">View</a>
-                  </div>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      <p class="empty">No patients registered yet. <a href="{{ url_for('patients.new_patient') }}">Create one →</a></p>
-    {% endif %}
-  </section>
-
+  
   {% if current_user.is_admin %}
     <section class="panel" style="margin-top:24px;">
       <h2>Admin tools</h2>

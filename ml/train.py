@@ -41,9 +41,9 @@ matplotlib.use("Agg")  # headless
 # Pull in the shared SHAP dispatcher from the app package so train + inference
 # use the same explainer-selection logic.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from app.shap_utils import HAS_SHAP, make_explainer  # noqa: E402
+from app.shap_utils import _check_shap, make_explainer  # noqa: E402
 
-if HAS_SHAP:
+if _check_shap():
     import shap  # noqa: E402
 import matplotlib.pyplot as plt
 import numpy as np
@@ -232,7 +232,7 @@ def plot_diagnostics(name: str, pipeline: ImbPipeline, X_test, y_test, y_proba: 
 
 
 def shap_summary(pipeline: ImbPipeline, X_test: pd.DataFrame, out_dir: Path) -> list[str] | None:
-    if not HAS_SHAP:
+    if not _check_shap():
         log.warning("shap not installed; skipping SHAP summary")
         return None
     try:

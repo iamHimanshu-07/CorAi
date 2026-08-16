@@ -14,7 +14,7 @@ from typing import Any
 
 import joblib
 
-from .shap_utils import HAS_SHAP, make_explainer
+from .shap_utils import _check_shap, make_explainer
 
 log = logging.getLogger(__name__)
 
@@ -116,7 +116,7 @@ class Predictor:
 
         Returns dict of feature_name -> shap_value, or None if SHAP is unavailable.
         """
-        if not HAS_SHAP:
+        if not _check_shap():
             return None
         self._load()
         try:

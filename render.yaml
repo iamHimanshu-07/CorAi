@@ -29,8 +29,12 @@ services:
         value: 3.11.6
       - key: PYTHONUNBUFFERED
         value: "1"
+      # Single gunicorn worker + 4 threads (see gunicorn.conf.py).
+      # --preload used to OOM-kill the master on free tier (512 MB).
       - key: WEB_CONCURRENCY
-        value: "2"
+        value: "1"
+      - key: WEB_THREADS
+        value: "4"
 
       # Auto-generated secure values — Render shows them in the dashboard
       # AFTER the first deploy.

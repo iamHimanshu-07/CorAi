@@ -15,19 +15,18 @@
 # ----------------------------------------------------------------------------
 set -e
 
+# Render injects PORT at runtime (usually 10000). Fall back explicitly so a
+# missing/misconfigured env never leaves gunicorn bound to nothing (which
+# surfaces as "No open ports detected" / 502 on Render).
+: "${PORT:=10000}"
+export PORT
+
 # 1. Idempotent DB init. If it hiccups (e.g. transient DB lock), fall back to
 #    lazy schema creation on first request (`_ensure_schema` in app/__init__.py).
 flask --app 'app:create_app()' init-db || echo 'init-db skipped, will lazy-create'
 
-# 2. Start gunicorn. Workers/threads tuned for free-tier (2 vCPU).
-#    --preload: load the app once per worker (cheaper RSS than per-process fork
-#      when the model artifact and sklearn are heavy).
-#    --timeout 120: free-tier CPU is slow; first request after cold start can
-#      take 30-60 s while sklearn loads.
-exec gunicorn \
-    --workers 2 \
-    --threads 2 \
-    --bind "0.0.0.0:${PORT}" \
-    --timeout 120 \
-    --preload \
-    'app:create_app()'
+# 2. Start gunicorn. Tuned for Render free tier (see gunicorn.conf.py):
+#    - workers=1, threads=4 (no --preload): keeps the master under 512 MB
+#      so it can bind $PORT before being OOM-killed.
+#    - graceful_timeout=30: in-flight requests finish cleanly on SIGTERM.
+exec gunicorn --config gunicorn.conf.py 'app:create_app()'

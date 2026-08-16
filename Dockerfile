@@ -7,11 +7,11 @@
 #
 # On every boot (cold start after free-tier spin-down, or redeploy) we:
 #   1. Initialize the SQLite DB (idempotent).
-#   2. Train the model artifact if missing (~10 s on UCI heart disease).
-#   3. Start gunicorn against the Flask app factory.
+#   2. Start gunicorn against the Flask app factory.
 #
-# No persistent disk on free tier, so step 2 re-runs each cold start. That's
-# acceptable for a portfolio/demo app.
+# The pre-trained model artifact (models/corai-1.0.0.pkl) ships in the repo so
+# boot doesn't have to wait for training. No persistent disk on free tier, but
+# the DB and model artifact are both rebuildable on first request if missing.
 # ----------------------------------------------------------------------------
 
 FROM python:3.11-slim
@@ -51,28 +51,18 @@ COPY --chown=appuser:appuser . ./
 RUN mkdir -p instance models .rag_cache .hf_cache && \
     chown -R appuser:appuser instance models .rag_cache .hf_cache
 
+# Mark the entrypoint as executable (Windows-checked-in files often lose the
+# bit, and a non-exec script produces confusing "not found" errors).
+RUN chmod +x docker-entrypoint.sh
+
 USER appuser
 
 EXPOSE 10000
 
-# Boot sequence:
-#   * Pre-trained model artifact ships in the repo (models/corai-1.0.0.pkl)
-#     so Render's free-tier port scan doesn't time out waiting for in-container
-#     training to finish.
-#   * `flask init-db` is idempotent and runs in <1 s. The `|| echo` lets
-#     gunicorn start even if init-db hiccups (e.g. transient DB lock) —
-#     `_ensure_schema` in app/__init__.py will lazy-create on first request.
-#   * gunicorn binds 0.0.0.0:${PORT} immediately after.
-# We use the `app:create_app` form (no parens) — the factory's default
-# config_object resolves to `app.config.Config`.
-# --preload: load the app once per worker (cheaper RSS than per-process fork
-#   when the model artifact and sklearn are heavy).
-# --timeout 120: free-tier CPU is slow; first request after cold start can
-#   take 30-60 s while sklearn loads.
-ENTRYPOINT ["/usr/bin/tini", "--"]
-
-CMD ["sh", "-c", "\
-    flask --app '\''app:create_app()'\'' init-db || echo '\''init-db skipped, will lazy-create'\''; \
-    exec gunicorn --workers 2 --threads 2 --bind 0.0.0.0:${PORT} --timeout 120 \
-             --preload '\''app:create_app()'\'' \
-"]
+# Boot sequence lives in docker-entrypoint.sh so we don't have to wrestle with
+# shell-quoting inside the Dockerfile CMD array. Render's build pipeline once
+# surfaced `/bin/sh: 1: [sh,: not found` when the inline `CMD ["sh","-c","..."]`
+# was malformed — moving the script out of the Dockerfile sidesteps that
+# entirely.
+# tini reaps zombies and forwards signals to gunicorn for graceful shutdown.
+ENTRYPOINT ["/usr/bin/tini", "--", "/home/appuser/app/docker-entrypoint.sh"]

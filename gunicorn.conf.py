@@ -22,7 +22,7 @@ import os
 bind = os.getenv("BIND", "0.0.0.0:{}".format(os.getenv("PORT", "10000")))
 workers = int(os.getenv("WEB_CONCURRENCY", "1"))
 threads = int(os.getenv("WEB_THREADS", "4"))
-timeout = int(os.getenv("GUNICORN_TIMEOUT", "120"))
+timeout = int(os.getenv("GUNICORN_TIMEOUT", "300"))
 graceful_timeout = int(os.getenv("GUNICORN_GRACEFUL_TIMEOUT", "30"))
 keepalive = int(os.getenv("GUNICORN_KEEPALIVE", "5"))
 worker_class = "gthread"

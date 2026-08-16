@@ -137,6 +137,57 @@ Singh Yadav, via the project README.
 """
 
 
+def _search_knowledge_base(query: str) -> str | None:
+    """Search the CorAi knowledge base for relevant information to answer a query.
+
+    Returns a relevant snippet if found, otherwise None.
+    """
+    if not query or not isinstance(query, str):
+        return None
+
+    # Convert query to lowercase and split into words
+    query_words = set(query.lower().split())
+
+    # Filter out common stop words to focus on meaningful terms
+    stop_words = {'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from',
+                  'has', 'he', 'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the',
+                  'to', 'was', 'were', 'will', 'with', 'what', 'when', 'where', 'who',
+                  'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'some',
+                  'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too',
+                  'very', 'can', 'will', 'just', 'don', 'should', 'now'}
+    query_words = query_words - stop_words
+
+    if not query_words:
+        return None
+
+    # Split knowledge base into sentences (simple split on periods)
+    sentences = [s.strip() for s in corai_kb_content.split('.') if s.strip()]
+
+    # Score each sentence by how many query words it contains
+    scored_sentences = []
+    for sentence in sentences:
+        sentence_lower = sentence.lower()
+        sentence_words = set(sentence_lower.split())
+        # Remove stop words from sentence words too
+        sentence_words = sentence_words - stop_words
+
+        # Count matching words
+        matches = len(query_words & sentence_words)
+        if matches > 0:
+            scored_sentences.append((matches, sentence))
+
+    # Sort by score (descending) and return the best match
+    if scored_sentences:
+        scored_sentences.sort(key=lambda x: x[0], reverse=True)
+        # Return the best matching sentence, ensuring it ends with proper punctuation
+        best_sentence = scored_sentences[0][1]
+        if not best_sentence.endswith('.'):
+            best_sentence += '.'
+        return best_sentence
+
+    return None
+
+
 # --------------------------------------------------------------------------- #
 # Module-level state (lazy singleton)
 # --------------------------------------------------------------------------- #
@@ -226,6 +277,57 @@ def status() -> dict[str, Any]:
         "index_dir": str(_index_dir),
         "hf_cache": str(_hf_cache_dir),
     }
+
+
+def _search_knowledge_base(query: str) -> str | None:
+    """Search the CorAi knowledge base for relevant information to answer a query.
+
+    Returns a relevant snippet if found, otherwise None.
+    """
+    if not query or not isinstance(query, str):
+        return None
+
+    # Convert query to lowercase and split into words
+    query_words = set(query.lower().split())
+
+    # Filter out common stop words to focus on meaningful terms
+    stop_words = {'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from',
+                  'has', 'he', 'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the',
+                  'to', 'was', 'were', 'will', 'with', 'what', 'when', 'where', 'who',
+                  'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'some',
+                  'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too',
+                  'very', 'can', 'will', 'just', 'don', 'should', 'now'}
+    query_words = query_words - stop_words
+
+    if not query_words:
+        return None
+
+    # Split knowledge base into sentences (simple split on periods)
+    sentences = [s.strip() for s in corai_kb_content.split('.') if s.strip()]
+
+    # Score each sentence by how many query words it contains
+    scored_sentences = []
+    for sentence in sentences:
+        sentence_lower = sentence.lower()
+        sentence_words = set(sentence_lower.split())
+        # Remove stop words from sentence words too
+        sentence_words = sentence_words - stop_words
+
+        # Count matching words
+        matches = len(query_words & sentence_words)
+        if matches > 0:
+            scored_sentences.append((matches, sentence))
+
+    # Sort by score (descending) and return the best match
+    if scored_sentences:
+        scored_sentences.sort(key=lambda x: x[0], reverse=True)
+        # Return the best matching sentence, ensuring it ends with proper punctuation
+        best_sentence = scored_sentences[0][1]
+        if not best_sentence.endswith('.'):
+            best_sentence += '.'
+        return best_sentence
+
+    return None
 
 
 # --------------------------------------------------------------------------- #
@@ -345,6 +447,12 @@ def get_bot_response_safe(user_query: str) -> str:
     fallback string instead. Useful for chat routes that prefer 200 OK with
     an explanatory message over a 500.
     """
+    # First try to use the knowledge base search as a fallback
+    kb_result = _search_knowledge_base(user_query)
+    if kb_result:
+        return kb_result
+
+    # If no KB result, fall back to the original logic
     if not _probe_deps():
         return (
             "The RAG chatbot isn't fully wired up yet on this server "

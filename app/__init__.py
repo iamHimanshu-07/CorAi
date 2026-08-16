@@ -30,6 +30,10 @@ def create_app(config_object: str | object = "app.config.Config") -> Flask:
     login_manager.init_app(app)
     limiter.init_app(app)
 
+    @app.context_processor
+    def inject_csrf_token():
+        return dict(csrf_token=lambda: '')
+
     login_manager.login_view = "auth.login"
     login_manager.login_message_category = "warning"
 

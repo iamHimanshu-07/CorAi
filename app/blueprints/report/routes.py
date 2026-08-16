@@ -32,7 +32,7 @@ def allowed_file(filename):
 def parse_report_text(text):
     data = {
         'name': 'Anonymous',
-        'address': 'Mumbai',  # default area
+        'address': '',  # default to empty, will be filled from PDF or user context
         'age': 50.0,
         'sex': 'M',
         'restingbp': 120.0,
@@ -224,12 +224,17 @@ def upload():
                 input_features=features.to_dataframe_row()
             )
             db.session.add(pred_row)
-            
+
+            # Use user's area as fallback if no address found in PDF
+            report_address = parsed_data['address']
+            if not report_address and current_user.is_authenticated and hasattr(current_user, 'area') and current_user.area:
+                report_address = current_user.area
+
             # Save PDF Report Metadata
             pdf_rep = PdfReport(
                 filename=filename,
                 patient_name=parsed_data['name'],
-                address=parsed_data['address'],
+                address=report_address,
                 parsed_data=parsed_data,
                 patient_id=patient.id
             )

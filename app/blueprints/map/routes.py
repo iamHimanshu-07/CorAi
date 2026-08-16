@@ -7,12 +7,11 @@ bp = Blueprint('map', __name__, template_folder='templates')
 @bp.route('/map')
 @login_required
 def view_map():
-    # Retrieve query param 'area', fallback to user's area if configured, else default to Mumbai
+    # Retrieve query param 'area', fallback to user's area if configured
     area = request.args.get('area', '').strip()
     if not area and current_user.is_authenticated and hasattr(current_user, 'area'):
         area = current_user.area or ''
-    if not area:
-        area = 'Mumbai'
+    # If no area specified, leave empty for user to specify
 
     return render_template('map/map.html', area=area, map_tile_url=current_app.config.get('MAP_TILE_URL'))
 

@@ -89,7 +89,7 @@ class Prediction(db.Model):
     __tablename__ = "predictions"
 
     id = db.Column(db.Integer, primary_key=True)
-    patient_id = db.Column(db.Integer, db.ForeignKey("patients.id"), nullable=False)
+    patient_id = db.Column(db.Integer, db.ForeignKey("patients.id"), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
     probability = db.Column(db.Float, nullable=False)
     risk = db.Column(db.String(16), nullable=False)

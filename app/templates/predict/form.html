@@ -5,7 +5,6 @@
 <header class="page-header">
   <div>
     <h1>New prediction</h1>
-    <p class="muted">Fill in the 11 routine clinical measurements. Output: probability (0–100%) plus a Low / Moderate / High band.</p>
   </div>
   <p><a class="btn btn-secondary" href="{{ url_for('main.dashboard') }}">← Back</a></p>
 </header>
@@ -67,8 +66,7 @@
       <dt>SHAP</dt><dd>Per-feature contribution table</dd>
       <dt>PDF</dt><dd>Downloadable clinical report</dd>
     </dl>
-    <p class="muted" style="font-size:12px; margin-top:24px;">Educational use only. Not a clinical diagnosis.</p>
-  </aside>
+      </aside>
 </section>
 {% endblock %}
 {% block scripts %}

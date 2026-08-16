@@ -21,17 +21,6 @@
   <p class="muted" style="margin-top:8px; font-size:13px;">Calibrated · isotonic CV · 5-fold</p>
 </section>
 
-<section class="panel">
-  <h2>Pipeline</h2>
-  {{ m.step_flow([
-    (1, "Input", "11 routine clinical measurements collected."),
-    (2, "Preprocess", "Numerics standardized, categoricals one-hot encoded."),
-    (3, "Score", "Best-CV-AUC model returns a raw probability."),
-    (4, "Calibrate", "Isotonic calibration maps raw score to a meaningful probability."),
-    (5, "Band", "Threshold maps probability to Low / Moderate / High."),
-    (6, "Logged", "Prediction persisted with input snapshot + SHAP."),
-  ], current=6) }}
-</section>
 
 <section class="grid-2-col">
   <div class="panel">
@@ -43,24 +32,5 @@
     </dl>
   </div>
 
-  {% if explanations %}
-  <div class="panel">
-    <h2>SHAP contributions</h2>
-    <p class="muted" style="margin-top:-8px; font-size:13px;">Signed log-odds contribution per feature.</p>
-    <div class="table-wrap">
-    <table class="table shap-table">
-      <thead><tr><th>Feature</th><th class="num">Contribution</th></tr></thead>
-      <tbody>
-        {% for name, value in explanations.items() %}
-          <tr>
-            <td class="label">{{ name }}</td>
-            <td class="num {% if value > 0 %}shap-pos{% else %}shap-neg{% endif %}">{{ '%+.4f' % value }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    </div>
-  </div>
-  {% endif %}
-</section>
+  </section>
 {% endblock %}

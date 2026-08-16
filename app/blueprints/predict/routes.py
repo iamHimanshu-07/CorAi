@@ -9,7 +9,7 @@ from flask import Blueprint, abort, current_app, flash, redirect, render_templat
 from flask_login import current_user, login_required
 
 from ...extensions import db
-from ...models import Patient, Prediction
+from ...models import Prediction
 from ...predict import Predictor, features_from_form
 
 bp = Blueprint("predict", __name__)
@@ -42,41 +42,9 @@ def run():
         flash(str(exc), "danger")
         return redirect(url_for("predict.form"))
 
-    # Persist to DB if a patient_id was provided and the user owns the patient.
-    patient = None
-    patient_id_raw = request.form.get("patient_id", "").strip()
-    if patient_id_raw:
-        try:
-            patient_id = int(patient_id_raw)
-        except ValueError:
-            patient_id = None
-        if patient_id:
-            patient = db.session.get(Patient, patient_id)
-            if patient is None:
-                flash(f"Patient #{patient_id} not found; prediction saved without patient link.", "warning")
-    if patient is None:
-        patient = Patient(
-            name=request.form.get("name", "Anonymous"),
-            age=features.Age,
-            restingbp=features.RestingBP,
-            cholesterol=features.Cholesterol,
-            fastingbs=features.FastingBS,
-            maxhr=features.MaxHR,
-            oldpeak=features.Oldpeak,
-            sex=features.Sex,
-            cp=features.ChestPainType,
-            restecg=features.RestingECG,
-            exang=features.ExerciseAngina,
-            slope=features.ST_Slope,
-            risk=result.risk,
-            probability=result.probability,
-            owner_id=current_user.id if current_user.is_authenticated else None,
-        )
-        db.session.add(patient)
-        db.session.flush()  # need patient.id
-
+    # Create prediction record linked to user (if authenticated)
     pred_row = Prediction(
-        patient_id=patient.id,
+        patient_id=None,  # No patient linkage since we removed patient views
         user_id=current_user.id if current_user.is_authenticated else None,
         probability=result.probability,
         risk=result.risk,
@@ -118,7 +86,6 @@ def pdf_report(prediction_id: int):
         Spacer(1, 0.2 * inch),
         Paragraph(f"Generated: {datetime.now(UTC).isoformat()}", styles["Normal"]),
         Paragraph(f"Prediction ID: {pred.id}", styles["Normal"]),
-        Paragraph(f"Patient ID: {pred.patient_id}", styles["Normal"]),
         Paragraph(f"Model version: {pred.model_version}", styles["Normal"]),
         Spacer(1, 0.2 * inch),
         Paragraph(f"Probability: {pred.probability:.2f}%", styles["Heading3"]),

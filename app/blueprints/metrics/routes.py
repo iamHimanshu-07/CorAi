@@ -47,7 +47,14 @@ def _report_path() -> Path:
     p2 = app_root / "ml" / "evaluation" / "report.json"
     if p2.exists():
         return p2
-    return p
+    # Last resort: check if ml/evaluation exists in app root
+    p3 = app_root / "ml" / "evaluation"
+    if p3.exists():
+        # Look for any report.json in subdirectories
+        for report_file in p3.rglob("report.json"):
+            if report_file.is_file():
+                return report_file
+    return p  # Return the primary path even if it doesn't exist
 
 
 def _load_report() -> dict | None:
@@ -55,7 +62,10 @@ def _load_report() -> dict | None:
     if not p.exists():
         return None
     try:
-        return json.loads(p.read_text(encoding="utf-8"))
+        content = p.read_text(encoding="utf-8")
+        if not content.strip():
+            return None
+        return json.loads(content)
     except Exception:  # noqa: BLE001
         return None
 
@@ -92,7 +102,7 @@ def show():
 @bp.get("/metrics/<path:artifact>")
 def artifact(artifact: str):
     """Serve per-model PNGs and SHAP summary from ml/evaluation/."""
-    if ".." in artifact:
+    if ".." in artifact or "/" in artifact:
         abort(404)
     repo_root = Path(current_app.root_path).parent
     base = (repo_root / "ml" / "evaluation").resolve()
@@ -124,12 +134,14 @@ def artifact(artifact: str):
 # --------------------------------------------------------------------------- #
 def _admin_required(view):
     from functools import wraps
+
     @wraps(view)
     @login_required
     def wrapper(*args, **kwargs):
         if not current_user.is_admin:
             abort(403)
         return view(*args, **kwargs)
+
     return wrapper
 
 
@@ -176,18 +188,18 @@ def retrain():
         if _train_status["running"]:
             flash("A retrain is already running — check /metrics/train_status.", "warning")
             return redirect(url_for("metrics.show"))
-        data_path = current_app.config.get("CorAi_TRAIN_DATA", "heart.csv")
-        version = current_app.config.get("CorAi_MODEL_VERSION", "1.0.0")
-        _train_status.update({
-            "running": True,
-            "started_at": None,
-            "finished_at": None,
-            "ok": None,
-            "error": None,
-            "log_tail": [],
-            "version": version,
-            "data_path": data_path,
-        })
+    data_path = current_app.config.get("CorAi_TRAIN_DATA", "heart.csv")
+    version = current_app.config.get("CorAi_MODEL_VERSION", "1.0.0")
+    _train_status.update({
+        "running": True,
+        "started_at": None,
+        "finished_at": None,
+        "ok": None,
+        "error": None,
+        "log_tail": [],
+        "version": version,
+        "data_path": data_path,
+    })
 
     from datetime import UTC, datetime
     with _train_lock:

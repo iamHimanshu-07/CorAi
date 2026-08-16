@@ -17,7 +17,7 @@
     <pre style="background: #0f172a; color: #e2e8f0; padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.9rem;"><code>python -m ml.train --data heart.csv --version 1.0.0</code></pre>
     <p style="margin: 0 0 1rem 0;">can't be run by hand. Use the in-app admin button instead:</p>
     <ol style="margin: 0 0 1rem 0; padding-left: 1.4rem;">
-      <li>Log in as the bootstrap admin (default username <code>doctor</code>, password <code>corai2026</code>; promote to admin via <code>flask --app 'app:create_app()' create-user --username you --role admin</code>).</li>
+      <li>Log in as the bootstrap admin (default username <code>doctor</code>, password <code>corai2026</code>; create additional doctors and admins via the register page).</li>
       <li>Open <a href="{{ url_for('metrics.show') }}">/metrics</a>. The page shows a blue <strong>Run training now</strong> panel (admin only).</li>
       <li>Click it. The training runs in a background thread inside the web worker. Refresh <code>/metrics</code> after 30-90 s — Render free is slow.</li>
       <li>Watch progress at <a href="{{ url_for('metrics.train_status') }}">/metrics/train_status</a> (JSON snapshot).</li>

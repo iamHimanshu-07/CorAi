@@ -8,8 +8,7 @@
     <div>
       <h1>Heart disease risk, <strong>scored in 92&nbsp;ms.</strong></h1>
       <p class="lede">A calibrated ensemble classifier trained on the UCI heart-disease dataset. It turns 11 routine clinical measurements into a probability and a Low / Moderate / High risk band — auditable, explainable, and free to study.</p>
-      <p class="warning">Educational use only. Not a clinical diagnosis.</p>
-      <p class="cta">
+            <p class="cta">
         {% if current_user.is_authenticated %}
           <a class="btn btn-primary" href="{{ url_for('main.dashboard') }}">Go to dashboard →</a>
           <a class="btn btn-secondary" href="{{ url_for('predict.form') }}">Run a prediction</a>
@@ -36,6 +35,18 @@
     (4, "Score", "The highest-CV-AUC model from Logistic Regression, Random Forest, XGBoost, LightGBM returns a probability (0–100%)."),
     (5, "Audit", "Every prediction is persisted with input features, model version, user, and SHAP feature contributions."),
   ]) }}
+</section>
+
+<section class="panel">
+  <h2>Pipeline</h2>
+  {{ m.step_flow([
+    (1, "Input", "11 routine clinical measurements collected."),
+    (2, "Preprocess", "Numerics standardized, categoricals one-hot encoded."),
+    (3, "Score", "Best-CV-AUC model returns a raw probability."),
+    (4, "Calibrate", "Isotonic calibration maps raw score to a meaningful probability."),
+    (5, "Band", "Threshold maps probability to Low / Moderate / High."),
+    (6, "Logged", "Prediction persisted with input snapshot + SHAP."),
+  ], current=6) }}
 </section>
 
 {% if metrics %}

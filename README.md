@@ -14,7 +14,6 @@
 
 </div>
 
-> ⚠️ **Educational use only.** Not a clinical diagnosis. See [MODEL_CARD.md](MODEL_CARD.md).
 
 ---
 

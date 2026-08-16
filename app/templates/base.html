@@ -19,7 +19,6 @@
           <a href="{{ url_for('report.upload') }}">Upload Report</a>
           <a href="{{ url_for('map.view_map') }}">Find Doctor</a>
           {% if current_user.is_doctor or current_user.is_admin %}
-            <a href="{{ url_for('patients.list_patients') }}">Patients</a>
             <a href="{{ url_for('predict.form') }}">New prediction</a>
           {% endif %}
           <a href="{{ url_for('metrics.show') }}">Metrics</a>
@@ -81,7 +80,7 @@
 
   <footer class="site-footer">
     <div class="container">
-      <small></small>
+      <small>CorAi v1.0.0 &copy; 2026</small>
     </div>
   </footer>
 

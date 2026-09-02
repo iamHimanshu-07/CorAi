@@ -2,8 +2,7 @@
 
 A short, plain-English guide to:
   1. Generating the model evaluation report (the /metrics page).
-  2. Enabling the HeartAI Copilot chatbot (Gemini or OpenAI).
-  3. Where to put env vars on Render.
+  2. Where to put env vars on Render.
 
 These are the questions a new operator asks first, so we surface them
 inside the running app rather than burying them in the README.

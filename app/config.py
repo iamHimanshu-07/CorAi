@@ -72,12 +72,6 @@ class Config:
     RATELIMIT_STORAGE_URI = os.getenv("RATELIMIT_STORAGE_URI", "memory://")
     RATELIMIT_DEFAULT = "200 per hour"
 
-    # RAG engine — both env names are accepted (legacy + current).
-    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-    GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
-    # LLM (OpenAI) key for the chatbot fallback path.
-    LLM_API_KEY = os.getenv("LLM_API_KEY", "")
-    LLM_MODEL = os.getenv("LLM_MODEL", "gpt-3.5-turbo")
     # Map tile URL (Leaflet with OpenStreetMap free tiles)
     MAP_TILE_URL = os.getenv("MAP_TILE_URL", "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png")
     # PDF upload settings

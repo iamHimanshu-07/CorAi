@@ -39,8 +39,6 @@ triggered it — auditable, not a black box.
 - Real PDF analysis report (cover page, drawn risk gauge, SHAP table)
 - PDF medical-record upload → auto-parse features → predict
 - Doctor map (Leaflet + OpenStreetMap) for cardiologist lookup
-- HeartAI Copilot — floating chat widget backed by Gemini + a local FAISS
-  RAG index over the CorAi knowledge base (optional, falls back to OpenAI)
 - FHIR R4 Patient import stub
 - Bootstrap doctor account + audit log
 
@@ -103,14 +101,7 @@ save them somewhere safe.
 Until you set `BOOTSTRAP_DOCTOR_PASSWORD` to something memorable, Render
 randomly generated one for you (see step 2) — get it from the dashboard.
 
-### 4. Optional: enable HeartAI Copilot
-1. Get a Gemini API key from <https://aistudio.google.com/apikey>.
-2. In Render: **Environment → Add Environment Variable** →
-   - Key: `GOOGLE_API_KEY`
-   - Value: your key
-3. Click **Save Changes** → Render redeploys.
-
-### 5. URL
+### 4. URL
 Your live URL will be `https://corai.onrender.com`. Sign in with the
 bootstrap doctor account set above.
 
@@ -140,9 +131,6 @@ All knobs are environment variables (no code changes needed). See
 | `MODEL_PATH` | `models/corai-1.0.0.pkl` | inference artifact |
 | `BOOTSTRAP_DOCTOR_USERNAME` | `doctor` | seeded on first request if missing |
 | `BOOTSTRAP_DOCTOR_PASSWORD` | `corai2026` | **change in production** |
-| `GOOGLE_API_KEY` | empty | enable HeartAI Copilot (Gemini + FAISS RAG) |
-| `GEMINI_API_KEY` | empty | legacy alias for `GOOGLE_API_KEY` |
-| `LLM_API_KEY` | empty | OpenAI fallback for the chatbot |
 | `PORT` | `5000` (dev) / `10000` (Render) | gunicorn bind port |
 
 ---
@@ -152,7 +140,7 @@ All knobs are environment variables (no code changes needed). See
 ```
 .
 ├── app/
-│   ├── __init__.py        # app factory — wires blueprints + RAG config
+│   ├── __init__.py        # app factory — wires blueprints
 │   ├── config.py          # dev / test / prod configs (env-driven)
 │   ├── extensions.py      # db, login, migrate, limiter
 │   ├── models.py          # User, Patient, Prediction, PdfReport, Doctor
@@ -174,7 +162,6 @@ All knobs are environment variables (no code changes needed). See
 │       ├── admin/         # user management, audit log
 │       ├── fhir/          # FHIR R4 Patient import stub
 │       ├── metrics/       # evaluation dashboard
-│       ├── chatbot/       # /chat endpoint (RAG → OpenAI fallback)
 │       ├── report/        # PDF upload + parse + download
 │       ├── map/           # doctor map (Leaflet)
 │       └── about/         # WHO / CVD info (scraped, cached)
@@ -185,7 +172,6 @@ All knobs are environment variables (no code changes needed). See
 ├── models/
 │   └── corai-1.0.0.pkl    # generated at boot; gitignored
 ├── tests/                 # pytest, in-memory SQLite
-├── rag_engine.py          # Gemini + FAISS RAG for HeartAI Copilot
 ├── Dockerfile             # production image (Render / any Docker host)
 ├── render.yaml            # Render Blueprint (free plan)
 ├── pyproject.toml         # ruff config

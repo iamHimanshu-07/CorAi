@@ -29,37 +29,6 @@ def test_doctors_api(doctor_client, app):
     assert len(data["doctors"]) >= 1
     assert data["doctors"][0]["name"] == "Dr. Amit Verma"
 
-@patch('app.blueprints.chatbot.routes.OpenAI')
-def test_chatbot_api(mock_openai_class, doctor_client, app, monkeypatch):
-    # Mock OpenAI API response
-    mock_client = mock_openai_class.return_value
-    mock_client.chat.completions.create.return_value = type('obj', (object,), {
-        'choices': [
-            type('choice', (object,), {
-                'message': type('msg', (object,), {
-                    'content': 'Hello, I am a mocked AI assistant.'
-                })
-            })
-        ]
-    })
-
-    # The chat route prefers RAG (Gemini) when GOOGLE_API_KEY is set. To
-    # exercise the OpenAI fallback path we explicitly force
-    # ``is_configured()`` to return False for the duration of this test.
-    # This way the mock is actually used regardless of the host env.
-    monkeypatch.setattr(
-        "app.blueprints.chatbot.routes._rag_ready", lambda: False
-    )
-
-    # Set mock configuration so LLM_API_KEY passes check
-    with app.app_context():
-        app.config['LLM_API_KEY'] = 'test-key'
-
-    rv = doctor_client.post("/chat", json={"message": "Hello"})
-    assert rv.status_code == 200
-    data = rv.get_json()
-    assert data["reply"] == "Hello, I am a mocked AI assistant."
-
 def test_upload_report_page(doctor_client):
     rv = doctor_client.get("/upload-report")
     assert rv.status_code == 200

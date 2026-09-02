@@ -108,7 +108,7 @@
     "cat__ST_Slope_Flat",
     "cat__ST_Slope_Up"
   ],
-  "trained_at": "2026-08-14T15:51:44.784031+00:00",
+  "trained_at": "2026-08-21T19:25:24.044866+00:00",
   "tools": {
     "sklearn": "1.9.0",
     "numpy": "2.4.6",

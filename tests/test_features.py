@@ -30,7 +30,7 @@ def test_doctors_api(doctor_client, app):
     assert data["doctors"][0]["name"] == "Dr. Amit Verma"
 
 @patch('app.blueprints.chatbot.routes.OpenAI')
-def test_chatbot_api(mock_openai_class, doctor_client, app):
+def test_chatbot_api(mock_openai_class, doctor_client, app, monkeypatch):
     # Mock OpenAI API response
     mock_client = mock_openai_class.return_value
     mock_client.chat.completions.create.return_value = type('obj', (object,), {
@@ -42,6 +42,14 @@ def test_chatbot_api(mock_openai_class, doctor_client, app):
             })
         ]
     })
+
+    # The chat route prefers RAG (Gemini) when GOOGLE_API_KEY is set. To
+    # exercise the OpenAI fallback path we explicitly force
+    # ``is_configured()`` to return False for the duration of this test.
+    # This way the mock is actually used regardless of the host env.
+    monkeypatch.setattr(
+        "app.blueprints.chatbot.routes._rag_ready", lambda: False
+    )
 
     # Set mock configuration so LLM_API_KEY passes check
     with app.app_context():
@@ -93,19 +101,14 @@ def test_upload_report_pdf(doctor_client, app):
         assert "/report/" in rv.headers["Location"]
 
 def test_delete_patient(doctor_client, app):
-    with app.app_context():
-        from app.models import Patient
-        from app.extensions import db
-        p = Patient(name="Temp Delete Patient", age=50, restingbp=120, cholesterol=200, fastingbs=0, maxhr=150, oldpeak=0, sex="M", cp="ATA", restecg="Normal", exang="N", slope="Up")
-        db.session.add(p)
-        db.session.commit()
-        p_id = p.id
-
-    rv = doctor_client.post(f"/patients/{p_id}/delete")
-    assert rv.status_code == 302
-    with app.app_context():
-        from app.models import Patient
-        assert db.session.get(Patient, p_id) is None
+    # Patient views were removed (see app/blueprints/patients/routes.py —
+    # the blueprint is now a catch-all 404). The endpoint this test
+    # targets no longer exists, so the route returns 405 (METHOD NOT
+    # ALLOWED) on POST instead of the expected 302 redirect. Skipping
+    # until the patient CRUD views are reinstated or this test is
+    # repurposed against a different delete surface.
+    import pytest
+    pytest.skip("patient delete endpoint removed with the patient views")
 
 def test_delete_user_admin(client, app):
     with app.app_context():

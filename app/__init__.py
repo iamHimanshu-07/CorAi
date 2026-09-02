@@ -37,35 +37,6 @@ def create_app(config_object: str | object = "app.config.Config") -> Flask:
     login_manager.login_view = "auth.login"
     login_manager.login_message_category = "warning"
 
-    # Configure RAG engine (HeartAI Copilot) with Gemini API key from config.
-    # IMPORTANT: do NOT ``import rag_engine`` here. rag_engine pulls in
-    # langchain / faiss-cpu / sentence-transformers / torch at module load,
-    # which blows Render's 512 MB free-tier cap and SIGKILLs (exit 137) the
-    # gunicorn worker before it ever binds $PORT — surfacing as
-    # "No open ports detected" in the Render build log.
-    #
-    # Instead, only configure RAG if a key is present, and rely on the lazy
-    # import inside ``rag_engine.configure`` and ``get_bot_response`` to
-    # load the heavy deps on first chat request. If the deps aren't even
-    # installed (slim requirements.txt), the chat route falls back to
-    # OpenAI or a friendly "needs configuration" message.
-    gemini_key = app.config.get("GOOGLE_API_KEY") or app.config.get("GEMINI_API_KEY")
-    if gemini_key:
-        try:
-            import rag_engine  # lazy: heavy chain only loaded on chat hit
-            rag_engine.configure(
-                google_api_key=gemini_key,
-                index_dir=os.getenv("CorAi_RAG_INDEX", ".rag_cache/corai_index"),
-            )
-            app.logger.info("RAG engine configured with Gemini API key")
-        except Exception as exc:  # noqa: BLE001
-            app.logger.warning("RAG engine not available: %s", exc)
-    else:
-        app.logger.warning(
-            "GOOGLE_API_KEY/GEMINI_API_KEY not set; HeartAI Copilot will "
-            "show a configuration message in the chat widget."
-        )
-
     # Blueprints
     from .blueprints.admin.routes import bp as admin_bp
     from .blueprints.api.routes import bp as api_bp
@@ -76,7 +47,6 @@ def create_app(config_object: str | object = "app.config.Config") -> Flask:
     from .blueprints.patients.routes import bp as patients_bp
     from .blueprints.predict.routes import bp as predict_bp
     # New feature blueprints
-    from .blueprints.chatbot.routes import bp as chatbot_bp
     from .blueprints.report.routes import bp as report_bp
     from .blueprints.map.routes import bp as map_bp
     from .blueprints.about.routes import bp as about_bp
@@ -90,7 +60,6 @@ def create_app(config_object: str | object = "app.config.Config") -> Flask:
     app.register_blueprint(fhir_bp, url_prefix="/fhir")
     app.register_blueprint(metrics_bp)
     # Register new feature blueprints
-    app.register_blueprint(chatbot_bp)
     app.register_blueprint(report_bp)
     app.register_blueprint(map_bp)
     app.register_blueprint(about_bp)

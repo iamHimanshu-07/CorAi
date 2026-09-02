@@ -6,7 +6,7 @@
 
   <header style="margin-bottom: 2rem;">
     <h1 style="color: #1e3a8a; font-size: 2rem; font-weight: 800; margin: 0 0 0.5rem 0;">Deployment & operations</h1>
-    <p style="color: #475569; margin: 0;">Plain-English guide to the two things operators ask about most: <em>why is /metrics empty?</em> and <em>how do I turn on the chatbot?</em></p>
+    <p style="color: #475569; margin: 0;">Plain-English guide to the things operators ask about most: <em>why is /metrics empty?</em></p>
   </header>
 
   <!-- Section 1: Generate the metrics report -->
@@ -25,42 +25,9 @@
     <p style="margin: 0; color: #64748b; font-size: 0.9rem;"><strong>Note:</strong> training peaks at ~300-400 MB RAM. On free tier (512 MB cap) it's tight but works because the training runs in a worker that's already loaded with sklearn; if it OOMs, switch to a Starter+ plan.</p>
   </section>
 
-  <!-- Section 2: Enable the chatbot -->
-  <section style="background: #ffffff; border-radius: 12px; padding: 2rem; border: 1px solid #e2e8f0; margin-bottom: 1.5rem;">
-    <h2 style="color: #1e3a8a; font-size: 1.4rem; font-weight: 700; margin: 0 0 0.8rem 0;">2. Enable the HeartAI Copilot chatbot</h2>
-    <p style="margin: 0 0 1rem 0;">The floating chat widget on every authenticated page supports two backends. Pick <strong>one</strong>:</p>
-
-    <h3 style="color: #1e3a8a; font-size: 1.1rem; font-weight: 700; margin: 1rem 0 0.5rem 0;">Option A — Google Gemini (recommended)</h3>
-    <ol style="margin: 0 0 1rem 0; padding-left: 1.4rem;">
-      <li>Get a free API key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>.</li>
-      <li>On Render: <strong>Environment</strong> → <strong>Add Environment Variable</strong>:
-        <ul style="margin: 0.3rem 0 0.8rem 0; padding-left: 1.4rem;">
-          <li><code>Key</code>: <code>GOOGLE_API_KEY</code></li>
-          <li><code>Value</code>: your key</li>
-          <li><strong>Mark as secret.</strong></li>
-        </ul>
-      </li>
-      <li>Trigger a manual deploy (or push to <code>main</code>). The chat widget picks up the new key automatically — no rebuild required, gunicorn workers re-read env on each chat request.</li>
-    </ol>
-    <p style="margin: 0 0 1rem 0; color: #475569; font-size: 0.9rem;"><strong>RAM caveat:</strong> the full RAG stack (langchain + faiss-cpu + sentence-transformers + torch) needs ~700 MB RAM at boot. The current slim <code>requirements.txt</code> ships without it to fit Render free (512 MB cap). To enable RAG on Render free you must either upgrade to a plan with ≥1 GB RAM <em>and</em> uncomment the RAG block in <code>requirements.txt</code>, or deploy to a host with more RAM (Render Starter+, Fly.io, Railway, a VPS).</p>
-
-    <h3 style="color: #1e3a8a; font-size: 1.1rem; font-weight: 700; margin: 1rem 0 0.5rem 0;">Option B — OpenAI (lighter weight)</h3>
-    <ol style="margin: 0 0 0; padding-left: 1.4rem;">
-      <li>Get an API key from <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com/api-keys</a>.</li>
-      <li>On Render, add:
-        <ul style="margin: 0.3rem 0 0.8rem 0; padding-left: 1.4rem;">
-          <li><code>Key</code>: <code>LLM_API_KEY</code></li>
-          <li><code>Value</code>: your key</li>
-          <li><code>Key</code>: <code>LLM_MODEL</code> &nbsp;·&nbsp; <code>Value</code>: <code>gpt-4o-mini</code> (or any model you have access to)</li>
-        </ul>
-      </li>
-    </ol>
-    <p style="margin: 0; color: #64748b; font-size: 0.9rem;">OpenAI works on Render free because the <code>openai</code> package is already in <code>requirements.txt</code> and only loads on a chat request (not at boot).</p>
-  </section>
-
-  <!-- Section 3: Where Render puts env vars -->
+  <!-- Section 2: Where Render puts env vars -->
   <section style="background: #ffffff; border-radius: 12px; padding: 2rem; border: 1px solid #e2e8f0;">
-    <h2 style="color: #1e3a8a; font-size: 1.4rem; font-weight: 700; margin: 0 0 0.8rem 0;">3. Where Render puts env vars</h2>
+    <h2 style="color: #1e3a8a; font-size: 1.4rem; font-weight: 700; margin: 0 0 0.8rem 0;">2. Where Render puts env vars</h2>
     <p style="margin: 0 0 1rem 0;">Render injects env vars into the running container at boot. To set them:</p>
     <ol style="margin: 0 0 1rem 0; padding-left: 1.4rem;">
       <li>Open the CorAi service on the Render dashboard.</li>
